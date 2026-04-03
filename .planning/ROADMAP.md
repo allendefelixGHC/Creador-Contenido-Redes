@@ -30,9 +30,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: TBD
 
 Plans:
-- [ ] 01-01: Add format selection step (single vs carousel) and slide count configuration to wizard/run.js
-- [ ] 01-02: Add AI slide count suggestion logic and auto-set Ideogram + has_text_in_image for carousels
-- [ ] 01-03: Update brief JSON schema to include num_images and image_prompts, validate backward compatibility
+- [ ] 01-01: Add suggestSlideCount function, format selection step, and carousel image-model bypass to wizard/run.js
+- [ ] 01-02: Update brief JSON with conditional spread for carousel fields, update summary screen, add suggest-slides to step.js
 
 ### Phase 2: n8n Content Generation
 **Goal**: n8n receives a carousel brief and GPT-4o generates one contextual image prompt per slide, choosing the right carousel structure (narrative, listicle, step-by-step, etc.) and applying Propulsar's visual style to every prompt
@@ -71,6 +70,6 @@ Phases execute in numeric order: 1 → 2 → 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Wizard Carousel Flow | 0/3 | Not started | - |
+| 1. Wizard Carousel Flow | 0/2 | Not started | - |
 | 2. n8n Content Generation | 0/2 | Not started | - |
 | 3. n8n Image Generation + WhatsApp Preview | 0/3 | Not started | - |
