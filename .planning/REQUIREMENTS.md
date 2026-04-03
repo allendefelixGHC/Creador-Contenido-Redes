@@ -1,0 +1,79 @@
+# Requirements: Propulsar Content Engine — Carousel Support
+
+**Defined:** 2026-04-03
+**Core Value:** Generate complete carousel posts (multiple images + captions) in one wizard run
+
+## v1 Requirements
+
+### Wizard
+
+- [ ] **WIZ-01**: Wizard pregunta formato: post normal (1 imagen) o carrusel
+- [ ] **WIZ-02**: Si carrusel, Wizard pregunta cantidad de slides (3-10, default 5)
+- [ ] **WIZ-03**: AI sugiere cantidad de slides optima segun tipo de post y tema
+- [ ] **WIZ-04**: Para carruseles, has_text_in_image = true automaticamente, Ideogram por defecto
+- [ ] **WIZ-05**: Brief JSON incluye num_images y array de image_prompts
+- [ ] **WIZ-06**: Post normal mantiene flujo actual sin cambios (backward compatible)
+
+### Content Generation
+
+- [ ] **GEN-01**: GPT-4o genera un image prompt con texto overlay por slide
+- [ ] **GEN-02**: AI elige estructura del carrusel (narrativo, listicle, paso a paso, etc.)
+- [ ] **GEN-03**: Todos los slides mantienen estilo visual Propulsar consistente
+
+### Image Generation
+
+- [ ] **IMG-01**: n8n genera N imagenes secuencialmente (una por slide) via Ideogram
+- [ ] **IMG-02**: Normalizar URLs de todas las imagenes generadas
+
+### WhatsApp Preview
+
+- [ ] **WA-01**: Todas las imagenes del carrusel se envian por WhatsApp como preview
+- [ ] **WA-02**: Flujo de aprobacion SI/NO se mantiene
+
+## v2 Requirements
+
+### Publishing
+
+- **PUB-01**: Publicar carrusel directamente en Instagram via Meta Graph API (carousel container)
+- **PUB-02**: Publicar versiones individuales de slides en Facebook
+
+### Editing
+
+- **EDIT-01**: Editar texto de slides individuales sin regenerar todo
+- **EDIT-02**: Regenerar imagen de un slide especifico manteniendo los demas
+
+## Out of Scope
+
+| Feature | Reason |
+|---------|--------|
+| Frontend/dashboard UI | Proyecto separado, se construye despues |
+| Video slides | Solo imagenes estaticas por ahora |
+| Manual text per slide en Wizard | AI decide todo el contenido |
+| Generacion paralela de imagenes | Sequential es mas seguro con rate limits de APIs |
+
+## Traceability
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| WIZ-01 | TBD | Pending |
+| WIZ-02 | TBD | Pending |
+| WIZ-03 | TBD | Pending |
+| WIZ-04 | TBD | Pending |
+| WIZ-05 | TBD | Pending |
+| WIZ-06 | TBD | Pending |
+| GEN-01 | TBD | Pending |
+| GEN-02 | TBD | Pending |
+| GEN-03 | TBD | Pending |
+| IMG-01 | TBD | Pending |
+| IMG-02 | TBD | Pending |
+| WA-01 | TBD | Pending |
+| WA-02 | TBD | Pending |
+
+**Coverage:**
+- v1 requirements: 13 total
+- Mapped to phases: 0
+- Unmapped: 13
+
+---
+*Requirements defined: 2026-04-03*
+*Last updated: 2026-04-03 after initial definition*
