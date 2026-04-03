@@ -55,25 +55,25 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| WIZ-01 | TBD | Pending |
-| WIZ-02 | TBD | Pending |
-| WIZ-03 | TBD | Pending |
-| WIZ-04 | TBD | Pending |
-| WIZ-05 | TBD | Pending |
-| WIZ-06 | TBD | Pending |
-| GEN-01 | TBD | Pending |
-| GEN-02 | TBD | Pending |
-| GEN-03 | TBD | Pending |
-| IMG-01 | TBD | Pending |
-| IMG-02 | TBD | Pending |
-| WA-01 | TBD | Pending |
-| WA-02 | TBD | Pending |
+| WIZ-01 | Phase 1 | Pending |
+| WIZ-02 | Phase 1 | Pending |
+| WIZ-03 | Phase 1 | Pending |
+| WIZ-04 | Phase 1 | Pending |
+| WIZ-05 | Phase 1 | Pending |
+| WIZ-06 | Phase 1 | Pending |
+| GEN-01 | Phase 2 | Pending |
+| GEN-02 | Phase 2 | Pending |
+| GEN-03 | Phase 2 | Pending |
+| IMG-01 | Phase 3 | Pending |
+| IMG-02 | Phase 3 | Pending |
+| WA-01 | Phase 3 | Pending |
+| WA-02 | Phase 3 | Pending |
 
 **Coverage:**
 - v1 requirements: 13 total
-- Mapped to phases: 0
-- Unmapped: 13
+- Mapped to phases: 13
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-03*
-*Last updated: 2026-04-03 after initial definition*
+*Last updated: 2026-04-03 after roadmap creation*
