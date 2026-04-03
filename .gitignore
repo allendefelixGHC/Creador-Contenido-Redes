@@ -1,0 +1,15 @@
+# Environment variables (NUNCA commitear)
+.env
+
+# Dependencies
+node_modules/
+
+# Temporary build files
+.tmp/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/

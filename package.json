@@ -1,0 +1,19 @@
+{
+  "name": "propulsar-content-engine",
+  "version": "1.0.0",
+  "description": "Generador automatizado de contenido para redes sociales de Propulsar.ai",
+  "main": "wizard/run.js",
+  "scripts": {
+    "wizard": "node wizard/run.js",
+    "test-webhook": "node scripts/test-webhook.js",
+    "start": "node wizard/run.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "Propulsar.ai",
+  "license": "UNLICENSED"
+}
