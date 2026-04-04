@@ -10,24 +10,24 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 ## Current Position
 
 Phase: 1 of 3 (Wizard Carousel Flow)
-Plan: 1 of 3 in current phase
-Status: In progress — plan 01-01 complete
-Last activity: 2026-04-04 — Plan 01-01 executed (format selection + carousel branch)
+Plan: 2 of 3 in current phase
+Status: In progress — plan 01-02 complete
+Last activity: 2026-04-04 — Plan 01-02 executed (brief JSON carousel spread + step.js suggest-slides)
 
-Progress: [█░░░░░░░░░] 10%
+Progress: [██░░░░░░░░] 20%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
-- Average duration: 2 min
-- Total execution time: 2 min
+- Total plans completed: 2
+- Average duration: 1.5 min
+- Total execution time: 3 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-wizard-carousel-flow | 1 | 2 min | 2 min |
+| 01-wizard-carousel-flow | 2 | 3 min | 1.5 min |
 
 **Recent Trend:**
 - Last 5 plans: 2 min
@@ -48,6 +48,8 @@ Recent decisions affecting current work:
 - Project init: n8n 2.14.2 — no $env, no require() in Code nodes; must use HTTP Request nodes
 - [Phase 01-wizard-carousel-flow]: Ideogram v3 auto-set for all carousel slides — user never selects model for carousel
 - [Phase 01-wizard-carousel-flow]: Format step placed after PASO 2.5 so suggestSlideCount uses topic+type context
+- [Phase 01-wizard-carousel-flow]: ...(isCarousel && {...}) spread as last item in brief — zero extra fields for single-post, 14 fields for carousel
+- [Phase 01-wizard-carousel-flow]: step.js suggestSlideCount returns source field explicitly matching getTrendingTopics/getAngles convention
 
 ### Pending Todos
 
@@ -61,5 +63,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-04-04
-Stopped at: Completed 01-wizard-carousel-flow/01-01-PLAN.md
+Stopped at: Completed 01-wizard-carousel-flow/01-02-PLAN.md
 Resume file: None
