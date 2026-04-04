@@ -374,7 +374,7 @@ async function runWizard() {
   console.log(`  🎯 Ángulo:      ${chosenAngle ? c("bright", chosenAngle) : c("gray","(AI lo define)")}`);
   console.log(`  📱 Plataformas: ${platforms.join(" + ")}`);
   if (isCarousel) {
-    console.log(`  📊 Formato:     Carrusel — ${numImages} slides`);
+    console.log(`  📊 Formato:     ${c("bright", `Carrusel — ${numImages} slides`)}`);
     console.log(`  🖼️  Modelo:      🔤 Ideogram v3 (fijo para carruseles)`);
   } else {
     const selectedModel = IMAGE_MODELS[imageModel] || { name: "Imagen propia", emoji: "📎" };
@@ -395,13 +395,18 @@ async function runWizard() {
     type,
     angle: chosenAngle,
     platforms,
-    image_model:    imageModel,
-    fal_model_id:   IMAGE_MODELS[imageModel]?.falModel || null,
-    has_own_image:  hasOwnImage,
-    image_url:      imageUrl,
+    image_model:       imageModel,
+    fal_model_id:      IMAGE_MODELS[imageModel]?.falModel || null,
+    has_own_image:     hasOwnImage,
+    image_url:         imageUrl,
     has_text_in_image: hasTextInImage,
-    approval_number: process.env.WHATSAPP_APPROVAL_NUMBER,
-    timestamp:      new Date().toISOString(),
+    approval_number:   process.env.WHATSAPP_APPROVAL_NUMBER,
+    timestamp:         new Date().toISOString(),
+    ...(isCarousel && {
+      format:        "carousel",
+      num_images:    numImages,
+      image_prompts: [],
+    }),
   };
 
   await sendWebhook(brief);
