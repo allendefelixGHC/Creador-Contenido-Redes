@@ -12,7 +12,7 @@ This milestone extends the existing single-image pipeline to support Instagram c
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Wizard Carousel Flow** - Add carousel format selection and slide configuration to wizard/run.js, keeping single-post flow intact
+- [x] **Phase 1: Wizard Carousel Flow** - Add carousel format selection and slide configuration to wizard/run.js, keeping single-post flow intact (completed 2026-04-04)
 - [ ] **Phase 2: n8n Content Generation** - Extend n8n to generate per-slide image prompts and choose carousel structure via GPT-4o
 - [ ] **Phase 3: n8n Image Generation + WhatsApp Preview** - Generate all carousel images sequentially via Ideogram and send each one via WhatsApp for preview
 
@@ -70,6 +70,6 @@ Phases execute in numeric order: 1 → 2 → 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Wizard Carousel Flow | 0/2 | Not started | - |
+| 1. Wizard Carousel Flow | 0/2 | Complete    | 2026-04-04 |
 | 2. n8n Content Generation | 0/2 | Not started | - |
 | 3. n8n Image Generation + WhatsApp Preview | 0/3 | Not started | - |
