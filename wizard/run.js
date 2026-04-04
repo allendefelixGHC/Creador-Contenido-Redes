@@ -174,6 +174,38 @@ Solo este JSON array sin markdown:
   }
 }
 
+// ─── Sugerencia de cantidad de slides via Claude ──────────
+async function suggestSlideCount(topic, postType) {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const FALLBACK = { count: 5, reason: "Cantidad estándar para carruseles educativos" };
+  if (!apiKey) return FALLBACK;
+  try {
+    const typeCtx = {
+      educational: "post educativo accionable",
+      authority:   "post de autoridad sobre tendencia",
+      case_study:  "post de caso de éxito con resultados reales",
+    };
+    const data = await httpPost(
+      "https://api.anthropic.com/v1/messages",
+      JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 100,
+        messages: [{
+          role: "user",
+          content: `Eres estratega de contenido para Instagram. Para un ${typeCtx[postType] || typeCtx.educational} sobre "${topic}", ¿cuántos slides tiene el carrusel ideal? Rango: 3-10. Solo JSON sin markdown: {"count": 5, "reason": "1 frase"}`,
+        }],
+      }),
+      { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "Content-Type": "application/json" }
+    );
+    const txt = data.content?.[0]?.text || "";
+    const parsed = JSON.parse(txt.replace(/```json\n?/g,"").replace(/```\n?/g,"").trim());
+    const count = Math.min(10, Math.max(3, parseInt(parsed.count) || 5));
+    return { count, reason: parsed.reason || "" };
+  } catch {
+    return FALLBACK;
+  }
+}
+
 // ─── WIZARD PRINCIPAL ──────────────────────────────────────
 async function runWizard() {
   console.log("\n");
@@ -238,10 +270,34 @@ async function runWizard() {
     console.log(c("gray", "\n  ✓ El AI definirá el ángulo"));
   }
 
-  // PASO 3: PLATAFORMAS
+  // PASO 3: FORMATO
   console.log();
   div();
-  console.log(c("bright", "  PASO 3 — Plataformas\n"));
+  console.log(c("bright", "  PASO 3 — Formato\n"));
+  const fmtChoice = await ask(
+    `  [1] Post normal     — 1 imagen\n` +
+    `  [2] Carrusel        — múltiples slides con texto en imagen\n` +
+    `  → `
+  );
+  const isCarousel = fmtChoice.trim() === "2";
+
+  let numImages = 1;
+  if (isCarousel) {
+    console.log(c("gray", "  Calculando slides ideales..."));
+    const suggestion = await suggestSlideCount(topic, type);
+    console.log(c("green", `\n  Sugerencia: ${c("bright", String(suggestion.count))} slides`));
+    console.log(c("gray", `     ${suggestion.reason}\n`));
+    const slideInput = await ask(`  ¿Cuántos slides? (3-10, Enter = ${suggestion.count}) → `);
+    const parsedSlides = parseInt(slideInput.trim());
+    numImages = slideInput.trim() === "" ? suggestion.count : Math.min(10, Math.max(3, parsedSlides || suggestion.count));
+    console.log(c("green", `\n  ✓ Carrusel — ${numImages} slides\n`));
+  } else {
+    console.log(c("green", `\n  ✓ Post normal\n`));
+  }
+
+  // PASO 4: PLATAFORMAS
+  div();
+  console.log(c("bright", "  PASO 4 — Plataformas\n"));
   const platformChoice = await ask(
     `  [1] Instagram + Facebook (recomendado)\n  [2] Solo Instagram\n  [3] Solo Facebook\n  → `
   );
@@ -249,53 +305,64 @@ async function runWizard() {
   const platforms = platformMap[platformChoice.trim()] || ["instagram","facebook"];
   console.log(c("green", `\n  ✓ ${platforms.join(" + ")}\n`));
 
-  // PASO 4: IMAGEN — ROUTER INTELIGENTE
-  div();
-  console.log(c("bright", c("blue", "  🎨 PASO 4 — Modelo de imagen\n")));
-
-  // ¿Lleva texto en la imagen?
-  const hasTextQ = await ask("  ¿Este post va a tener texto, datos o estadísticas visibles en la imagen? (s/n) → ");
-  const hasTextInImage = hasTextQ.trim().toLowerCase() === "s";
-
-  // Sugerencia automática
-  const suggested = suggestModel(type, hasTextInImage);
-  console.log(c("green", `\n  💡 Recomendación para este post: ${suggested.emoji} ${c("bright", suggested.name)}`));
-  console.log(c("gray",  `     ${suggested.strength}`));
-  console.log(c("gray",  `     Costo: ${suggested.cost}  |  Velocidad: ${suggested.speed}\n`));
-
-  // Tabla completa de opciones
-  console.log(c("bright", "  Todos los modelos disponibles:\n"));
-  Object.values(IMAGE_MODELS).forEach((m, i) => {
-    const isRec = m.id === suggested.id;
-    const tag = isRec ? c("green", " ← recomendado") : "";
-    console.log(`  [${i+1}] ${m.emoji}  ${c("bright", m.name.padEnd(18))} ${c("gray", m.cost.padEnd(10))} ${c("gray", m.speed)}${tag}`);
-    console.log(c("gray",`       ${m.strength}`));
-    console.log(c("gray",`       Ideal para: ${m.bestForLabel}\n`));
-  });
-  console.log(`  [4] Imagen propia (pegar URL)`);
-  console.log(`  [Enter] Usar recomendación (${suggested.name})\n`);
-
-  const modelChoice = await ask("  → Elegí: ");
-  const modelChoiceTrim = modelChoice.trim();
-
+  // PASO 5: IMAGEN — ROUTER INTELIGENTE (solo para post normal)
   let imageModel;
   let imageUrl = null;
   let hasOwnImage = false;
-  const modelKeys = Object.keys(IMAGE_MODELS);
+  let hasTextInImage;
 
-  if (modelChoiceTrim === "" || modelChoiceTrim === "0") {
-    imageModel = suggested.id;
-  } else if (modelChoiceTrim === "4") {
-    imageUrl = (await ask("  → URL de tu imagen: ")).trim();
-    imageModel = "custom";
-    hasOwnImage = true;
+  if (isCarousel) {
+    // Carousel: Ideogram v3 fijo — no preguntar
+    imageModel    = "ideogram";
+    imageUrl      = null;
+    hasOwnImage   = false;
+    hasTextInImage = true;
+    console.log(c("green", "\n  ✓ Modelo fijo: 🔤 Ideogram v3 (texto en imagen para cada slide)"));
+    console.log(c("gray",  "     Precisión tipográfica 90-95% — ideal para slides con texto\n"));
   } else {
-    const idx = parseInt(modelChoiceTrim) - 1;
-    imageModel = (idx >= 0 && idx < modelKeys.length) ? modelKeys[idx] : suggested.id;
-  }
+    div();
+    console.log(c("bright", c("blue", "  🎨 PASO 5 — Modelo de imagen\n")));
 
-  const selectedModel = IMAGE_MODELS[imageModel] || { name: "Imagen propia", emoji: "📎" };
-  console.log(c("green", `\n  ✓ ${selectedModel.emoji} ${selectedModel.name || "Imagen propia"}\n`));
+    // ¿Lleva texto en la imagen?
+    const hasTextQ = await ask("  ¿Este post va a tener texto, datos o estadísticas visibles en la imagen? (s/n) → ");
+    hasTextInImage = hasTextQ.trim().toLowerCase() === "s";
+
+    // Sugerencia automática
+    const suggested = suggestModel(type, hasTextInImage);
+    console.log(c("green", `\n  💡 Recomendación para este post: ${suggested.emoji} ${c("bright", suggested.name)}`));
+    console.log(c("gray",  `     ${suggested.strength}`));
+    console.log(c("gray",  `     Costo: ${suggested.cost}  |  Velocidad: ${suggested.speed}\n`));
+
+    // Tabla completa de opciones
+    console.log(c("bright", "  Todos los modelos disponibles:\n"));
+    Object.values(IMAGE_MODELS).forEach((m, i) => {
+      const isRec = m.id === suggested.id;
+      const tag = isRec ? c("green", " ← recomendado") : "";
+      console.log(`  [${i+1}] ${m.emoji}  ${c("bright", m.name.padEnd(18))} ${c("gray", m.cost.padEnd(10))} ${c("gray", m.speed)}${tag}`);
+      console.log(c("gray",`       ${m.strength}`));
+      console.log(c("gray",`       Ideal para: ${m.bestForLabel}\n`));
+    });
+    console.log(`  [4] Imagen propia (pegar URL)`);
+    console.log(`  [Enter] Usar recomendación (${suggested.name})\n`);
+
+    const modelChoice = await ask("  → Elegí: ");
+    const modelChoiceTrim = modelChoice.trim();
+    const modelKeys = Object.keys(IMAGE_MODELS);
+
+    if (modelChoiceTrim === "" || modelChoiceTrim === "0") {
+      imageModel = suggested.id;
+    } else if (modelChoiceTrim === "4") {
+      imageUrl = (await ask("  → URL de tu imagen: ")).trim();
+      imageModel = "custom";
+      hasOwnImage = true;
+    } else {
+      const idx = parseInt(modelChoiceTrim) - 1;
+      imageModel = (idx >= 0 && idx < modelKeys.length) ? modelKeys[idx] : suggested.id;
+    }
+
+    const selectedModel = IMAGE_MODELS[imageModel] || { name: "Imagen propia", emoji: "📎" };
+    console.log(c("green", `\n  ✓ ${selectedModel.emoji} ${selectedModel.name || "Imagen propia"}\n`));
+  }
 
   // RESUMEN
   div();
@@ -306,7 +373,13 @@ async function runWizard() {
   console.log(`  🏷️  Tipo:        ${typeLabel[type]}`);
   console.log(`  🎯 Ángulo:      ${chosenAngle ? c("bright", chosenAngle) : c("gray","(AI lo define)")}`);
   console.log(`  📱 Plataformas: ${platforms.join(" + ")}`);
-  console.log(`  🖼️  Imagen:      ${selectedModel.emoji} ${selectedModel.name || "Imagen propia"}${selectedModel.cost ? c("gray"," · "+selectedModel.cost) : ""}`);
+  if (isCarousel) {
+    console.log(`  📊 Formato:     Carrusel — ${numImages} slides`);
+    console.log(`  🖼️  Modelo:      🔤 Ideogram v3 (fijo para carruseles)`);
+  } else {
+    const selectedModel = IMAGE_MODELS[imageModel] || { name: "Imagen propia", emoji: "📎" };
+    console.log(`  🖼️  Imagen:      ${selectedModel.emoji} ${selectedModel.name || "Imagen propia"}${selectedModel.cost ? c("gray"," · "+selectedModel.cost) : ""}`);
+  }
   console.log();
   div();
 
