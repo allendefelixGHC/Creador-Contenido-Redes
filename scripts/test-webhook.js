@@ -2,14 +2,24 @@
 
 /**
  * Test del webhook de n8n — NO publica en redes
- * Ejecutar: node scripts/test-webhook.js
+ *
+ * Usage:
+ *   node scripts/test-webhook.js                       — test single post (default)
+ *   node scripts/test-webhook.js --carousel            — test carousel (5 slides default)
+ *   node scripts/test-webhook.js --carousel --slides 7 — test carousel with 7 slides
  */
 
 const https = require("https");
 const http = require("http");
 require("dotenv").config({ path: require("path").join(__dirname, "../.env") });
 
-const testBrief = {
+// --- CLI flags ---
+const isCarousel = process.argv.includes("--carousel");
+const slidesIndex = process.argv.indexOf("--slides");
+const numSlides = slidesIndex !== -1 ? parseInt(process.argv[slidesIndex + 1]) || 5 : 5;
+
+// --- Single-post brief (original, unchanged) ---
+const singlePostBrief = {
   topic: "TEST — Cómo automatizar el seguimiento de clientes con WhatsApp",
   type: "educational",
   platforms: ["instagram", "facebook"],
@@ -21,6 +31,27 @@ const testBrief = {
   _test: true, // Flag para que n8n pueda detectar que es un test
 };
 
+// --- Carousel brief (14 fields matching exact Phase 1 schema) ---
+const carouselBrief = {
+  topic: "5 formas de automatizar tu negocio con IA en 2026",
+  type: "educational",
+  angle: "Guía paso a paso para dueños de PYMEs",
+  platforms: ["instagram", "facebook"],
+  image_model: "ideogram",
+  fal_model_id: null,
+  has_own_image: false,
+  image_url: null,
+  has_text_in_image: true,
+  approval_number: process.env.WHATSAPP_APPROVAL_NUMBER || "34612345678",
+  timestamp: new Date().toISOString(),
+  format: "carousel",
+  num_images: numSlides,
+  image_prompts: [],
+};
+
+// --- Select brief based on mode ---
+const brief = isCarousel ? carouselBrief : singlePostBrief;
+
 async function testWebhook() {
   const webhookUrl = process.env.WEBHOOK_URL;
 
@@ -29,11 +60,11 @@ async function testWebhook() {
     process.exit(1);
   }
 
-  console.log("🧪 Propulsar Content Engine — Test de Webhook");
+  console.log(`\n🧪 Testing ${isCarousel ? `CAROUSEL (${numSlides} slides)` : "SINGLE POST"} webhook...\n`);
+  console.log("Propulsar Content Engine — Test de Webhook");
   console.log("━".repeat(50));
   console.log("📡 URL:", webhookUrl);
-  console.log("📋 Brief de prueba:");
-  console.log(JSON.stringify(testBrief, null, 2));
+  console.log("📦 Brief:", JSON.stringify(brief, null, 2));
   console.log("━".repeat(50));
   console.log("⏳ Enviando...\n");
 
@@ -41,7 +72,7 @@ async function testWebhook() {
     const url = new URL(webhookUrl);
     const isHttps = url.protocol === "https:";
     const client = isHttps ? https : http;
-    const body = JSON.stringify(testBrief);
+    const body = JSON.stringify(brief);
 
     const options = {
       hostname: url.hostname,
