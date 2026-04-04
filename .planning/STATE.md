@@ -5,32 +5,33 @@
 See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** Generate complete carousel posts (multiple images + captions) in one wizard run, each slide with its own Ideogram-generated image with text overlay
-**Current focus:** Phase 1 — Wizard Carousel Flow
+**Current focus:** Phase 2 — n8n Content Generation
 
 ## Current Position
 
-Phase: 1 of 3 (Wizard Carousel Flow)
-Plan: 2 of 3 in current phase
-Status: In progress — plan 01-02 complete
-Last activity: 2026-04-04 — Plan 01-02 executed (brief JSON carousel spread + step.js suggest-slides)
+Phase: 2 of 3 (n8n Content Generation)
+Plan: 1 of 3 in current phase
+Status: In progress — plan 02-01 complete
+Last activity: 2026-04-04 — Plan 02-01 executed (carousel detection branch added to n8n workflow)
 
-Progress: [██░░░░░░░░] 20%
+Progress: [███░░░░░░░] 33%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2
-- Average duration: 1.5 min
-- Total execution time: 3 min
+- Total plans completed: 3
+- Average duration: 2.3 min
+- Total execution time: 7 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-wizard-carousel-flow | 2 | 3 min | 1.5 min |
+| 02-n8n-content-generation | 1 | 4 min | 4 min |
 
 **Recent Trend:**
-- Last 5 plans: 2 min
+- Last 5 plans: 2.3 min
 - Trend: baseline
 
 *Updated after each plan completion*
@@ -50,6 +51,8 @@ Recent decisions affecting current work:
 - [Phase 01-wizard-carousel-flow]: Format step placed after PASO 2.5 so suggestSlideCount uses topic+type context
 - [Phase 01-wizard-carousel-flow]: ...(isCarousel && {...}) spread as last item in brief — zero extra fields for single-post, 14 fields for carousel
 - [Phase 01-wizard-carousel-flow]: step.js suggestSlideCount returns source field explicitly matching getTrendingTopics/getAngles convention
+- [Phase 02-n8n-content-generation]: Carousel GPT-4o call includes captions + all slide prompts in one call — avoids extra LLM call in Phase 3
+- [Phase 02-n8n-content-generation]: Each slide prompt is fully self-contained with all Propulsar style constraints — no cross-slide references
 
 ### Pending Todos
 
@@ -63,5 +66,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-04-04
-Stopped at: Completed 01-wizard-carousel-flow/01-02-PLAN.md
+Stopped at: Completed 02-n8n-content-generation/02-01-PLAN.md
 Resume file: None
