@@ -44,8 +44,8 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 02-01: Add carousel branch in n8n workflow triggered by num_images > 1; build GPT-4o prompt that generates N image prompts with structure selection
-- [ ] 02-02: Validate prompt outputs match num_images count; add style enforcement to system prompt; test with 3, 5, and 7 slide inputs
+- [ ] 02-01: Add IF node, GPT-4o carousel prompt node, and Code parser node to workflow.json; rewire connections for carousel branch
+- [ ] 02-02: Add carousel test mode to test-webhook.js; verify both paths in n8n
 
 ### Phase 3: n8n Image Generation + WhatsApp Preview
 **Goal**: n8n generates all carousel images sequentially via Ideogram and delivers each image to WhatsApp as a preview, keeping the existing approval gate intact
