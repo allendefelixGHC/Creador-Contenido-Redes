@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 ## Current Position
 
 Phase: 1 of 3 (Wizard Carousel Flow)
-Plan: 0 of 3 in current phase
-Status: Ready to plan
-Last activity: 2026-04-03 — Roadmap created, phases derived from requirements
+Plan: 1 of 3 in current phase
+Status: In progress — plan 01-01 complete
+Last activity: 2026-04-04 — Plan 01-01 executed (format selection + carousel branch)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] 10%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0
-- Average duration: -
-- Total execution time: -
+- Total plans completed: 1
+- Average duration: 2 min
+- Total execution time: 2 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 01-wizard-carousel-flow | 1 | 2 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: -
-- Trend: -
+- Last 5 plans: 2 min
+- Trend: baseline
 
 *Updated after each plan completion*
 
@@ -46,6 +46,8 @@ Recent decisions affecting current work:
 - Project init: AI decides carousel structure (narrative/listicle/step-by-step) — user never selects it
 - Project init: Sequential image generation chosen over parallel (safer with rate limits)
 - Project init: n8n 2.14.2 — no $env, no require() in Code nodes; must use HTTP Request nodes
+- [Phase 01-wizard-carousel-flow]: Ideogram v3 auto-set for all carousel slides — user never selects model for carousel
+- [Phase 01-wizard-carousel-flow]: Format step placed after PASO 2.5 so suggestSlideCount uses topic+type context
 
 ### Pending Todos
 
@@ -58,6 +60,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-03
-Stopped at: Roadmap created — ready to run /gsd:plan-phase 1
+Last session: 2026-04-04
+Stopped at: Completed 01-wizard-carousel-flow/01-01-PLAN.md
 Resume file: None
