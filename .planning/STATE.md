@@ -11,10 +11,10 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 
 Phase: 3 of 3 (n8n Image Generation + WhatsApp Preview)
 Plan: 3 of 3 in current phase
-Status: In progress — awaiting human verification (checkpoint)
-Last activity: 2026-04-06 — Plan 03-03 tasks 1-2 complete: structural validation + test script updated
+Status: COMPLETE — all phases and plans executed and human-verified
+Last activity: 2026-04-06 — Plan 03-03 complete: end-to-end verification passed, n8n 2.14.2 bugs fixed, both carousel and single-post paths live
 
-Progress: [████████░░] 80%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -29,7 +29,7 @@ Progress: [████████░░] 80%
 |-------|-------|-------|----------|
 | 01-wizard-carousel-flow | 2 | 3 min | 1.5 min |
 | 02-n8n-content-generation | 2 | 8 min | 4 min |
-| 03-n8n-image-generation-whatsapp-preview | 2 | 8 min | 4 min |
+| 03-n8n-image-generation-whatsapp-preview | 3 | 68 min | 22.7 min |
 
 **Recent Trend:**
 - Last 5 plans: 2.6 min
@@ -59,6 +59,10 @@ Recent decisions affecting current work:
 - [Phase 03-01]: Collect Image URLs validates slide count vs num_images, strips query params from Ideogram URLs
 - [Phase 03]: YCloud sendDirectly used (not /messages) — synchronous confirmation before sending next slide
 - [Phase 03]: Preparar mensaje WA uses try/catch to read Collect Image URLs node first, falls back to $input for single-post path
+- [Phase 03-03]: n8n 2.14.2 IF v2 and Switch v3 always route to TRUE/first-output — use IF v1 with string comparisons in all workflows
+- [Phase 03-03]: SplitInBatches Done branch cannot reference loop body nodes via $() — remove SplitInBatches, n8n processes N items sequentially natively
+- [Phase 03-03]: Ideogram URLs are ephemeral signed URLs (?exp=&sig=) — never strip query params
+- [Phase 03-03]: Single-post path now sends image preview before text summary (Enviar preview imagen node added)
 
 ### Pending Todos
 
@@ -72,5 +76,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-04-06
-Stopped at: 03-03-PLAN.md Task 3 — checkpoint:human-verify (upload to n8n, test both paths)
+Stopped at: PROJECT COMPLETE — all 3 phases executed and verified
 Resume file: None
