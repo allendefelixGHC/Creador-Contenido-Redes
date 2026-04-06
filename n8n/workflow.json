@@ -1,7 +1,6 @@
 {
   "name": "Propulsar — Content Engine v3",
   "nodes": [
-
     {
       "parameters": {
         "httpMethod": "POST",
@@ -13,9 +12,11 @@
       "name": "🎯 Webhook Trigger",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [200, 300]
+      "position": [
+        200,
+        300
+      ]
     },
-
     {
       "parameters": {
         "respondWith": "json",
@@ -26,26 +27,35 @@
       "name": "✅ Responder al Wizard",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [420, 160]
+      "position": [
+        420,
+        160
+      ]
     },
-
     {
       "parameters": {
         "conditions": {
-          "conditions": [{
-            "leftValue": "={{ $json.body.format }}",
-            "rightValue": "carousel",
-            "operator": { "type": "string", "operation": "equals" }
-          }]
+          "conditions": [
+            {
+              "leftValue": "={{ $json.body.format }}",
+              "rightValue": "carousel",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
         }
       },
       "id": "check-carousel",
       "name": "🔀 ¿Carrusel?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [420, 520]
+      "position": [
+        420,
+        520
+      ]
     },
-
     {
       "parameters": {
         "model": "gpt-4o",
@@ -61,18 +71,25 @@
             }
           ]
         },
-        "options": { "temperature": 0.7 }
+        "options": {
+          "temperature": 0.7
+        }
       },
       "id": "openai-carousel",
       "name": "🎠 GPT-4o — Prompts Carrusel",
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 1.4,
-      "position": [640, 520],
+      "position": [
+        640,
+        520
+      ],
       "credentials": {
-        "openAiApi": { "id": "openai-credentials", "name": "OpenAI" }
+        "openAiApi": {
+          "id": "openai-credentials",
+          "name": "OpenAI"
+        }
       }
     },
-
     {
       "parameters": {
         "jsCode": "const raw = $input.first().json.message.content;\nconst b = $('🎯 Webhook Trigger').first().json.body;\n\nlet parsed;\ntry {\n  parsed = JSON.parse(raw.replace(/```json\\n?/g,'').replace(/```\\n?/g,'').trim());\n} catch(e) {\n  throw new Error('JSON inválido de GPT-4o (carrusel): ' + raw.substring(0,200));\n}\n\nconst slides = parsed.slides || [];\n\nif (slides.length !== b.num_images) {\n  console.warn(`⚠ GPT-4o devolvió ${slides.length} slides, se esperaban ${b.num_images}`);\n}\n\nreturn [{\n  json: {\n    instagram:       { caption: parsed.instagram_caption || '' },\n    facebook:        { caption: parsed.facebook_caption || '' },\n    topic:           b.topic,\n    type:            b.type,\n    angle:           b.angle || null,\n    platforms:       b.platforms,\n    image_model:     'ideogram',\n    fal_model_id:    null,\n    has_own_image:   false,\n    image_url:       null,\n    has_text_in_image: true,\n    approval_number: b.approval_number,\n    timestamp:       b.timestamp,\n    format:          'carousel',\n    num_images:      b.num_images,\n    estructura:      parsed.estructura || 'listicle',\n    image_prompts:   slides.map(s => ({\n      slide_num:     s.slide_num,\n      texto_overlay: s.texto_overlay,\n      prompt:        s.prompt,\n    })),\n  }\n}];",
@@ -82,9 +99,11 @@
       "name": "🔧 Parsear prompts carrusel",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [860, 520]
+      "position": [
+        860,
+        520
+      ]
     },
-
     {
       "parameters": {
         "jsCode": "const data = $input.first().json;\nconst prompts = data.image_prompts;\n\nreturn prompts.map(slide => ({\n  json: {\n    slide_num:       slide.slide_num,\n    texto_overlay:   slide.texto_overlay,\n    prompt:          slide.prompt,\n    approval_number: data.approval_number,\n    num_images:      data.num_images,\n    topic:           data.topic,\n    type:            data.type,\n  }\n}));",
@@ -94,9 +113,11 @@
       "name": "🎠 Explode Slides",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1080, 520]
+      "position": [
+        1080,
+        520
+      ]
     },
-
     {
       "parameters": {
         "batchSize": 1,
@@ -106,9 +127,11 @@
       "name": "🔄 Split Slides",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
-      "position": [1300, 520]
+      "position": [
+        1300,
+        520
+      ]
     },
-
     {
       "parameters": {
         "method": "POST",
@@ -116,8 +139,14 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Api-Key",      "value": "={{ $env.IDEOGRAM_API_KEY }}" },
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Api-Key",
+              "value": "={{ $env.IDEOGRAM_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -129,10 +158,12 @@
       "name": "🔤 Ideogram — Slide",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1520, 520],
+      "position": [
+        1520,
+        520
+      ],
       "notes": "Ideogram v2 per carousel slide — called once per slide via SplitInBatches loop"
     },
-
     {
       "parameters": {
         "model": "gpt-4o",
@@ -148,18 +179,25 @@
             }
           ]
         },
-        "options": { "temperature": 0.75 }
+        "options": {
+          "temperature": 0.75
+        }
       },
       "id": "openai-text",
       "name": "🤖 GPT-4o — Texto",
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 1.4,
-      "position": [420, 360],
+      "position": [
+        420,
+        360
+      ],
       "credentials": {
-        "openAiApi": { "id": "openai-credentials", "name": "OpenAI" }
+        "openAiApi": {
+          "id": "openai-credentials",
+          "name": "OpenAI"
+        }
       }
     },
-
     {
       "parameters": {
         "jsCode": "const raw = $input.first().json.message.content;\nlet parsed;\ntry {\n  parsed = JSON.parse(raw.replace(/```json\\n?/g,'').replace(/```\\n?/g,'').trim());\n} catch(e) {\n  throw new Error('JSON inválido de OpenAI: ' + raw.substring(0,200));\n}\nconst b = $('🎯 Webhook Trigger').first().json.body;\nreturn [{ json: {\n  instagram:       parsed.instagram || null,\n  facebook:        parsed.facebook  || null,\n  image_prompt:    parsed.instagram?.image_prompt || '',\n  platforms:       b.platforms,\n  topic:           b.topic,\n  type:            b.type,\n  angle:           b.angle || null,\n  image_model:     b.image_model || 'flux',\n  fal_model_id:    b.fal_model_id || 'fal-ai/flux-pro/v1.1',\n  has_own_image:   b.has_own_image || false,\n  image_url:       b.image_url || null,\n  has_text_in_image: b.has_text_in_image || false,\n  approval_number: b.approval_number,\n  timestamp:       b.timestamp\n}}];"
@@ -168,26 +206,35 @@
       "name": "🔧 Parsear contenido",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [640, 360]
+      "position": [
+        640,
+        360
+      ]
     },
-
     {
       "parameters": {
         "conditions": {
-          "conditions": [{
-            "leftValue":  "={{ $json.has_own_image }}",
-            "rightValue": true,
-            "operator": { "type": "boolean", "operation": "true" }
-          }]
+          "conditions": [
+            {
+              "leftValue": "={{ $json.has_own_image }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ]
         }
       },
       "id": "check-own-image",
       "name": "🖼️ ¿Imagen propia?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [860, 360]
+      "position": [
+        860,
+        360
+      ]
     },
-
     {
       "parameters": {
         "jsCode": "return [{ json: { ...$input.first().json, final_image_url: $input.first().json.image_url } }];"
@@ -196,40 +243,57 @@
       "name": "📎 Imagen propia",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1080, 200]
+      "position": [
+        1080,
+        200
+      ]
     },
-
     {
       "parameters": {
         "rules": {
           "values": [
             {
               "conditions": {
-                "conditions": [{
-                  "leftValue":  "={{ $json.image_model }}",
-                  "rightValue": "flux",
-                  "operator": { "type": "string", "operation": "equals" }
-                }]
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.image_model }}",
+                    "rightValue": "flux",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
               },
               "output": 0
             },
             {
               "conditions": {
-                "conditions": [{
-                  "leftValue":  "={{ $json.image_model }}",
-                  "rightValue": "ideogram",
-                  "operator": { "type": "string", "operation": "equals" }
-                }]
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.image_model }}",
+                    "rightValue": "ideogram",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
               },
               "output": 1
             },
             {
               "conditions": {
-                "conditions": [{
-                  "leftValue":  "={{ $json.image_model }}",
-                  "rightValue": "nanoBanana",
-                  "operator": { "type": "string", "operation": "equals" }
-                }]
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.image_model }}",
+                    "rightValue": "nanoBanana",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
               },
               "output": 2
             }
@@ -241,10 +305,12 @@
       "name": "🎨 Router — Modelo de imagen",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3,
-      "position": [1080, 440],
+      "position": [
+        1080,
+        440
+      ],
       "notes": "Rutas: 0=Flux, 1=Ideogram, 2=Nano Banana. Fallback → Flux."
     },
-
     {
       "parameters": {
         "method": "POST",
@@ -252,8 +318,14 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "=Key {{ $env.FAL_API_KEY }}" },
-            { "name": "Content-Type",  "value": "application/json" }
+            {
+              "name": "Authorization",
+              "value": "=Key {{ $env.FAL_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -265,10 +337,12 @@
       "name": "⚡ Flux 2 Pro (FAL.AI)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1300, 300],
+      "position": [
+        1300,
+        300
+      ],
       "notes": "FAL model: fal-ai/flux-pro/v1.1\nCosto: ~$0.03/img\nFortaleza: fotorrealismo premium"
     },
-
     {
       "parameters": {
         "method": "POST",
@@ -276,8 +350,14 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Api-Key",      "value": "={{ $env.IDEOGRAM_API_KEY }}" },
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Api-Key",
+              "value": "={{ $env.IDEOGRAM_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -289,10 +369,12 @@
       "name": "🔤 Ideogram v3",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1300, 440],
+      "position": [
+        1300,
+        440
+      ],
       "notes": "Costo: ~$0.06/img\nFortaleza: texto legible en imagen (90-95% precisión)\nRequiere IDEOGRAM_API_KEY"
     },
-
     {
       "parameters": {
         "method": "POST",
@@ -300,8 +382,14 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "=Key {{ $env.FAL_API_KEY }}" },
-            { "name": "Content-Type",  "value": "application/json" }
+            {
+              "name": "Authorization",
+              "value": "=Key {{ $env.FAL_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -313,10 +401,12 @@
       "name": "🍌 Nano Banana Pro (FAL.AI)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1300, 580],
+      "position": [
+        1300,
+        580
+      ],
       "notes": "FAL model: fal-ai/nano-banana (Gemini 3 Pro Image)\nCosto: ~$0.15/img\nFortaleza: razonamiento visual, 4K, alto impacto\nMisma FAL_API_KEY que Flux"
     },
-
     {
       "parameters": {
         "jsCode": "// Normalizar la URL de imagen de cualquier proveedor\nconst content = $('🔧 Parsear contenido').first().json;\nconst imageData = $input.first().json;\nconst model = content.image_model;\n\nlet finalUrl = null;\n\nif (model === 'flux' || model === 'nanoBanana') {\n  // FAL.AI devuelve: { images: [{ url }] } o { image: { url } }\n  finalUrl = imageData.images?.[0]?.url\n          || imageData.image?.url\n          || null;\n} else if (model === 'ideogram') {\n  // Ideogram devuelve: { data: [{ url }] }\n  finalUrl = imageData.data?.[0]?.url || null;\n} else if (model === 'custom') {\n  finalUrl = content.image_url;\n}\n\nif (!finalUrl) {\n  console.warn('⚠ No se pudo extraer URL de imagen. Respuesta:', JSON.stringify(imageData).substring(0, 300));\n}\n\nreturn [{ json: { ...content, final_image_url: finalUrl, image_provider_response: imageData } }];"
@@ -325,20 +415,24 @@
       "name": "🔗 Normalizar URL imagen",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1520, 440]
+      "position": [
+        1520,
+        440
+      ]
     },
-
     {
       "parameters": {
-        "jsCode": "const d = $input.first().json;\nconst typeEmoji  = { educational:'📚', authority:'🎤', case_study:'🏆' };\nconst typeLabel  = { educational:'Educativo', authority:'Autoridad', case_study:'Caso de éxito' };\nconst modelInfo  = {\n  flux:       '⚡ Flux 2 Pro',\n  ideogram:   '🔤 Ideogram v3',\n  nanoBanana: '🍌 Nano Banana Pro',\n  custom:     '📎 Imagen propia',\n};\n\nconst igPreview = d.instagram?.caption?.substring(0, 280) || 'N/A';\nconst fbPreview = d.facebook?.caption?.substring(0, 180) || 'N/A';\nconst igDots = (d.instagram?.caption?.length || 0) > 280 ? '...' : '';\nconst fbDots = (d.facebook?.caption?.length || 0)  > 180 ? '...' : '';\n\nconst msg = `🚀 *PROPULSAR CONTENT ENGINE*\n\n${typeEmoji[d.type] || '📝'} *Tipo:* ${typeLabel[d.type] || d.type}\n📌 *Tema:* ${d.topic}\n${d.angle ? `🎯 *Ángulo:* ${d.angle}\\n` : ''}📱 *Redes:* ${d.platforms.join(', ')}\n🖼️ *Imagen:* ${modelInfo[d.image_model] || d.image_model}\n\n━━━━━━━━━━━━━━━━\n📸 *INSTAGRAM:*\n${igPreview}${igDots}\n\n━━━━━━━━━━━━━━━━\n👥 *FACEBOOK:*\n${fbPreview}${fbDots}\n\n━━━━━━━━━━━━━━━━\n🖼️ ${d.final_image_url ? '✅ Imagen generada' : '⚠️ Sin imagen'}\n\n*¿Publicar?*\n✅ *SI* para publicar\n❌ *NO* para cancelar`;\n\nreturn [{ json: { ...d, whatsapp_message: msg, session_id: `propulsar_${Date.now()}` } }];"
+        "jsCode": "// Handle both single-post (from Normalizar URL imagen) and carousel (from Split Send WA Done)\nlet d;\ntry {\n  d = .first().json;\n} catch(e) {\n  d = .first().json;\n}\n\nconst isCarousel = d.format === 'carousel';\n\nconst typeEmoji  = { educational:'📚', authority:'🎤', case_study:'🏆' };\nconst typeLabel  = { educational:'Educativo', authority:'Autoridad', case_study:'Caso de éxito' };\nconst modelInfo  = {\n  flux:       '⚡ Flux 2 Pro',\n  ideogram:   '🔤 Ideogram v3',\n  nanoBanana: '🍌 Nano Banana Pro',\n  custom:     '📎 Imagen propia',\n};\n\nconst igPreview = d.instagram?.caption?.substring(0, 280) || 'N/A';\nconst fbPreview = d.facebook?.caption?.substring(0, 180) || 'N/A';\nconst igDots = (d.instagram?.caption?.length || 0) > 280 ? '...' : '';\nconst fbDots = (d.facebook?.caption?.length || 0)  > 180 ? '...' : '';\n\nconst imageStatus = isCarousel\n  ? '🎠 ' + (d.image_urls?.length || 0) + ' imágenes generadas (carrusel)'\n  : '🖼️ ' + (d.final_image_url ? '✅ Imagen generada' : '⚠️ Sin imagen');\n\nconst formatLine = isCarousel\n  ? '\n🎠 *Formato:* Carrusel (' + d.num_images + ' slides)\n'\n  : '\n';\n\nconst msg = '🚀 *PROPULSAR CONTENT ENGINE*\n\n' +\n  (typeEmoji[d.type] || '📝') + ' *Tipo:* ' + (typeLabel[d.type] || d.type) + '\n' +\n  '📌 *Tema:* ' + d.topic + '\n' +\n  (d.angle ? '🎯 *Ángulo:* ' + d.angle + '\n' : '') +\n  '📱 *Redes:* ' + d.platforms.join(', ') + '\n' +\n  '🖼️ *Imagen:* ' + (modelInfo[d.image_model] || d.image_model) +\n  formatLine +\n  '\n━━━━━━━━━━━━━━━━\n' +\n  '📸 *INSTAGRAM:*\n' + igPreview + igDots +\n  '\n\n━━━━━━━━━━━━━━━━\n' +\n  '👥 *FACEBOOK:*\n' + fbPreview + fbDots +\n  '\n\n━━━━━━━━━━━━━━━━\n' +\n  imageStatus +\n  '\n\n*¿Publicar?*\n✅ *SI* para publicar\n❌ *NO* para cancelar';\n\nreturn [{ json: { ...d, whatsapp_message: msg, session_id: 'propulsar_' + Date.now() } }];"
       },
       "id": "prepare-whatsapp",
       "name": "📱 Preparar mensaje WA",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1740, 440]
+      "position": [
+        1740,
+        440
+      ]
     },
-
     {
       "parameters": {
         "method": "POST",
@@ -346,8 +440,14 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "X-API-Key",    "value": "={{ $env.YCLOUD_API_KEY }}" },
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "X-API-Key",
+              "value": "={{ $env.YCLOUD_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -359,9 +459,11 @@
       "name": "📤 Enviar WhatsApp",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1960, 440]
+      "position": [
+        1960,
+        440
+      ]
     },
-
     {
       "parameters": {
         "httpMethod": "POST",
@@ -373,10 +475,12 @@
       "name": "📨 Webhook — Reply WA",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [2180, 440],
+      "position": [
+        2180,
+        440
+      ],
       "notes": "Configurar esta URL en YCloud → Webhooks → Incoming Messages"
     },
-
     {
       "parameters": {
         "respondWith": "json",
@@ -387,26 +491,35 @@
       "name": "✅ Responder YCloud",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [2400, 280]
+      "position": [
+        2400,
+        280
+      ]
     },
-
     {
       "parameters": {
         "conditions": {
-          "conditions": [{
-            "leftValue":  "={{ $json.body?.message?.text?.body?.trim().toUpperCase() }}",
-            "rightValue": "SI",
-            "operator": { "type": "string", "operation": "equals" }
-          }]
+          "conditions": [
+            {
+              "leftValue": "={{ $json.body?.message?.text?.body?.trim().toUpperCase() }}",
+              "rightValue": "SI",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
         }
       },
       "id": "check-approval",
       "name": "✅ ¿Aprobado?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [2400, 460]
+      "position": [
+        2400,
+        460
+      ]
     },
-
     {
       "parameters": {
         "jsCode": "// Recuperar sesión de Supabase\nconst phone = $json.body?.message?.from;\nconst supabaseUrl = $env.SUPABASE_URL;\nconst supabaseKey = $env.SUPABASE_ANON_KEY;\n\nif (!supabaseUrl || !supabaseKey) {\n  console.log('Supabase no configurado — modo testing');\n  return [{ json: { approved: true, topic: 'TEST', note: 'Configurar Supabase' } }];\n}\n\nconst https = require('https');\nconst url = new URL(`${supabaseUrl}/rest/v1/content_sessions?approval_number=eq.${phone}&status=eq.pending&order=created_at.desc&limit=1`);\n\nconst session = await new Promise((resolve, reject) => {\n  const req = https.get({\n    hostname: url.hostname,\n    path: url.pathname + url.search,\n    headers: { 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}` }\n  }, (res) => {\n    let d = '';\n    res.on('data', c => d += c);\n    res.on('end', () => { try { resolve(JSON.parse(d)[0] || null); } catch { resolve(null); }});\n  });\n  req.on('error', reject);\n});\n\nif (!session) throw new Error('Sesión pendiente no encontrada para: ' + phone);\nreturn [{ json: session }];"
@@ -415,9 +528,11 @@
       "name": "🔍 Recuperar sesión Supabase",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2620, 380]
+      "position": [
+        2620,
+        380
+      ]
     },
-
     {
       "parameters": {
         "jsCode": "console.log('Rechazado:', $json.body?.message?.from, new Date().toISOString());\nreturn [{ json: { status:'rejected', ts: new Date().toISOString() } }];"
@@ -426,9 +541,11 @@
       "name": "❌ Loguear rechazo",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2620, 560]
+      "position": [
+        2620,
+        560
+      ]
     },
-
     {
       "parameters": {
         "jsCode": "const carousel = $('🔧 Parsear prompts carrusel').first().json;\nconst loopItems = $input.all();\n\n// IMG-02: Normalize and validate all image URLs\nconst imageUrls = loopItems.map(item => {\n  const url = item.json.data?.[0]?.url || null;\n  if (url && typeof url === 'string' && url.startsWith('https://')) {\n    return url.split('?')[0]; // Strip query params for clean URL\n  }\n  return null;\n}).filter(Boolean);\n\nif (imageUrls.length !== carousel.num_images) {\n  throw new Error('Se generaron ' + imageUrls.length + ' imagenes, se esperaban ' + carousel.num_images + '. Faltan slides.');\n}\n\nreturn [{\n  json: {\n    instagram:       carousel.instagram,\n    facebook:        carousel.facebook,\n    topic:           carousel.topic,\n    type:            carousel.type,\n    angle:           carousel.angle || null,\n    platforms:       carousel.platforms,\n    image_model:     'ideogram',\n    approval_number: carousel.approval_number,\n    timestamp:       carousel.timestamp,\n    format:          'carousel',\n    num_images:      carousel.num_images,\n    image_urls:      imageUrls,\n    final_image_url: imageUrls[0] || null,\n  }\n}];",
@@ -438,9 +555,11 @@
       "name": "🗂️ Collect Image URLs",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1740, 520]
+      "position": [
+        1740,
+        520
+      ]
     },
-
     {
       "parameters": {
         "jsCode": "const data = $input.first().json;\nconst urls = data.image_urls;\n\nreturn urls.map((url, idx) => ({\n  json: {\n    current_image_url: url,\n    slide_index:       idx + 1,\n    num_images:        data.num_images,\n    approval_number:   data.approval_number,\n    _carousel_data:    data,\n  }\n}));",
@@ -450,9 +569,11 @@
       "name": "📨 Split URLs WA",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1960, 520]
+      "position": [
+        1960,
+        520
+      ]
     },
-
     {
       "parameters": {
         "batchSize": 1,
@@ -462,9 +583,11 @@
       "name": "🔄 Split Send WA",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
-      "position": [2180, 520]
+      "position": [
+        2180,
+        520
+      ]
     },
-
     {
       "parameters": {
         "method": "POST",
@@ -472,8 +595,14 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "X-API-Key",    "value": "={{ $env.YCLOUD_API_KEY }}" },
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "X-API-Key",
+              "value": "={{ $env.YCLOUD_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -485,25 +614,31 @@
       "name": "📤 Enviar imagen WA",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [2400, 620],
+      "position": [
+        2400,
+        620
+      ],
       "notes": "YCloud sendDirectly — sends one carousel image per loop iteration"
     },
-
     {
       "parameters": {
-        "documentId": { "value": "={{ $env.GOOGLE_SHEETS_ID }}" },
-        "sheetName":  { "value": "Log" },
+        "documentId": {
+          "value": "={{ $env.GOOGLE_SHEETS_ID }}"
+        },
+        "sheetName": {
+          "value": "Log"
+        },
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "Fecha":          "={{ new Date().toISOString() }}",
-            "Tema":           "={{ $json.topic }}",
-            "Tipo":           "={{ $json.type }}",
-            "Angulo":         "={{ $json.angle || '' }}",
-            "Plataformas":    "={{ Array.isArray($json.platforms) ? $json.platforms.join(', ') : '' }}",
-            "Modelo_Imagen":  "={{ $json.image_model }}",
-            "Imagen_URL":     "={{ $json.final_image_url || '' }}",
-            "Estado":         "Publicado"
+            "Fecha": "={{ new Date().toISOString() }}",
+            "Tema": "={{ $json.topic }}",
+            "Tipo": "={{ $json.type }}",
+            "Angulo": "={{ $json.angle || '' }}",
+            "Plataformas": "={{ Array.isArray($json.platforms) ? $json.platforms.join(', ') : '' }}",
+            "Modelo_Imagen": "={{ $json.image_model }}",
+            "Imagen_URL": "={{ $json.final_image_url || '' }}",
+            "Estado": "Publicado"
           }
         }
       },
@@ -511,89 +646,370 @@
       "name": "📊 Google Sheets Log",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.4,
-      "position": [2840, 380],
+      "position": [
+        2840,
+        380
+      ],
       "credentials": {
-        "googleSheetsOAuth2Api": { "id": "google-sheets-credentials", "name": "Google Sheets" }
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets-credentials",
+          "name": "Google Sheets"
+        }
       }
     }
-
   ],
-
   "connections": {
     "🎯 Webhook Trigger": {
-      "main": [[
-        { "node": "✅ Responder al Wizard", "type": "main", "index": 0 },
-        { "node": "🔀 ¿Carrusel?",         "type": "main", "index": 0 }
-      ]]
+      "main": [
+        [
+          {
+            "node": "✅ Responder al Wizard",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "🔀 ¿Carrusel?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "🔀 ¿Carrusel?": {
       "main": [
-        [{ "node": "🎠 GPT-4o — Prompts Carrusel", "type": "main", "index": 0 }],
-        [{ "node": "🤖 GPT-4o — Texto",             "type": "main", "index": 0 }]
+        [
+          {
+            "node": "🎠 GPT-4o — Prompts Carrusel",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "🤖 GPT-4o — Texto",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "🎠 GPT-4o — Prompts Carrusel": {
-      "main": [[{ "node": "🔧 Parsear prompts carrusel", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "🔧 Parsear prompts carrusel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "🔧 Parsear prompts carrusel": {
-      "main": [[{ "node": "🎠 Explode Slides", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "🎠 Explode Slides",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "🎠 Explode Slides": {
-      "main": [[{ "node": "🔄 Split Slides", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "🔄 Split Slides",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "🔄 Split Slides": {
       "main": [
-        [{ "node": "🔤 Ideogram — Slide", "type": "main", "index": 0 }],
-        [{ "node": "🗂️ Collect Image URLs", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "🔤 Ideogram — Slide",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "🗂️ Collect Image URLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "🔤 Ideogram — Slide": {
-      "main": [[{ "node": "🔄 Split Slides", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "🔄 Split Slides",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
-    "🤖 GPT-4o — Texto":    { "main": [[{ "node": "🔧 Parsear contenido",      "type": "main", "index": 0 }]] },
-    "🔧 Parsear contenido": { "main": [[{ "node": "🖼️ ¿Imagen propia?",        "type": "main", "index": 0 }]] },
+    "🗂️ Collect Image URLs": {
+      "main": [
+        [
+          {
+            "node": "📨 Split URLs WA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📨 Split URLs WA": {
+      "main": [
+        [
+          {
+            "node": "🔄 Split Send WA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔄 Split Send WA": {
+      "main": [
+        [
+          {
+            "node": "📤 Enviar imagen WA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "📱 Preparar mensaje WA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📤 Enviar imagen WA": {
+      "main": [
+        [
+          {
+            "node": "🔄 Split Send WA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🤖 GPT-4o — Texto": {
+      "main": [
+        [
+          {
+            "node": "🔧 Parsear contenido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔧 Parsear contenido": {
+      "main": [
+        [
+          {
+            "node": "🖼️ ¿Imagen propia?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "🖼️ ¿Imagen propia?": {
       "main": [
-        [{ "node": "📎 Imagen propia",               "type": "main", "index": 0 }],
-        [{ "node": "🎨 Router — Modelo de imagen",   "type": "main", "index": 0 }]
+        [
+          {
+            "node": "📎 Imagen propia",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "🎨 Router — Modelo de imagen",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
-    "📎 Imagen propia":             { "main": [[{ "node": "📱 Preparar mensaje WA",   "type": "main", "index": 0 }]] },
+    "📎 Imagen propia": {
+      "main": [
+        [
+          {
+            "node": "📱 Preparar mensaje WA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "🎨 Router — Modelo de imagen": {
       "main": [
-        [{ "node": "⚡ Flux 2 Pro (FAL.AI)",       "type": "main", "index": 0 }],
-        [{ "node": "🔤 Ideogram v3",               "type": "main", "index": 0 }],
-        [{ "node": "🍌 Nano Banana Pro (FAL.AI)",  "type": "main", "index": 0 }]
+        [
+          {
+            "node": "⚡ Flux 2 Pro (FAL.AI)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "🔤 Ideogram v3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "🍌 Nano Banana Pro (FAL.AI)",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
-    "⚡ Flux 2 Pro (FAL.AI)":      { "main": [[{ "node": "🔗 Normalizar URL imagen", "type": "main", "index": 0 }]] },
-    "🔤 Ideogram v3":              { "main": [[{ "node": "🔗 Normalizar URL imagen", "type": "main", "index": 0 }]] },
-    "🍌 Nano Banana Pro (FAL.AI)": { "main": [[{ "node": "🔗 Normalizar URL imagen", "type": "main", "index": 0 }]] },
-    "🔗 Normalizar URL imagen":    { "main": [[{ "node": "📱 Preparar mensaje WA",   "type": "main", "index": 0 }]] },
-    "📱 Preparar mensaje WA":      { "main": [[{ "node": "📤 Enviar WhatsApp",        "type": "main", "index": 0 }]] },
+    "⚡ Flux 2 Pro (FAL.AI)": {
+      "main": [
+        [
+          {
+            "node": "🔗 Normalizar URL imagen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔤 Ideogram v3": {
+      "main": [
+        [
+          {
+            "node": "🔗 Normalizar URL imagen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🍌 Nano Banana Pro (FAL.AI)": {
+      "main": [
+        [
+          {
+            "node": "🔗 Normalizar URL imagen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔗 Normalizar URL imagen": {
+      "main": [
+        [
+          {
+            "node": "📱 Preparar mensaje WA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📱 Preparar mensaje WA": {
+      "main": [
+        [
+          {
+            "node": "📤 Enviar WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "📨 Webhook — Reply WA": {
-      "main": [[
-        { "node": "✅ Responder YCloud", "type": "main", "index": 0 },
-        { "node": "✅ ¿Aprobado?",       "type": "main", "index": 0 }
-      ]]
+      "main": [
+        [
+          {
+            "node": "✅ Responder YCloud",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "✅ ¿Aprobado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "✅ ¿Aprobado?": {
       "main": [
-        [{ "node": "🔍 Recuperar sesión Supabase", "type": "main", "index": 0 }],
-        [{ "node": "❌ Loguear rechazo",            "type": "main", "index": 0 }]
+        [
+          {
+            "node": "🔍 Recuperar sesión Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "❌ Loguear rechazo",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
-    "🔍 Recuperar sesión Supabase": { "main": [[{ "node": "📊 Google Sheets Log", "type": "main", "index": 0 }]] }
+    "🔍 Recuperar sesión Supabase": {
+      "main": [
+        [
+          {
+            "node": "📊 Google Sheets Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-
-  "settings": { "executionOrder": "v1", "saveManualExecutions": true },
-  "tags": ["propulsar", "content-engine", "v3"],
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true
+  },
+  "tags": [
+    "propulsar",
+    "content-engine",
+    "v3"
+  ],
   "_meta": {
     "version": "3.1",
     "image_models": {
-      "flux":       { "fal_id": "fal-ai/flux-pro/v1.1",   "cost": "$0.03/img", "key": "FAL_API_KEY" },
-      "ideogram":   { "api":    "api.ideogram.ai",         "cost": "$0.06/img", "key": "IDEOGRAM_API_KEY" },
-      "nanoBanana": { "fal_id": "fal-ai/nano-banana",      "cost": "$0.15/img", "key": "FAL_API_KEY" }
+      "flux": {
+        "fal_id": "fal-ai/flux-pro/v1.1",
+        "cost": "$0.03/img",
+        "key": "FAL_API_KEY"
+      },
+      "ideogram": {
+        "api": "api.ideogram.ai",
+        "cost": "$0.06/img",
+        "key": "IDEOGRAM_API_KEY"
+      },
+      "nanoBanana": {
+        "fal_id": "fal-ai/nano-banana",
+        "cost": "$0.15/img",
+        "key": "FAL_API_KEY"
+      }
     },
     "note": "Midjourney NO incluido — no tiene API oficial. Riesgo de ban en servicios de terceros. Ver README.",
     "carousel_branch": "Added in v3.1 — IF node routes carousel briefs to dedicated GPT-4o node for per-slide prompt generation"
