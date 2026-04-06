@@ -34,30 +34,6 @@
     },
     {
       "parameters": {
-        "conditions": {
-          "conditions": [
-            {
-              "leftValue": "={{ $json.body.format }}",
-              "rightValue": "carousel",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            }
-          ]
-        }
-      },
-      "id": "check-carousel",
-      "name": "🔀 ¿Carrusel?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        420,
-        520
-      ]
-    },
-    {
-      "parameters": {
         "model": "gpt-4o",
         "messages": {
           "values": [
@@ -115,20 +91,6 @@
       "typeVersion": 2,
       "position": [
         1080,
-        520
-      ]
-    },
-    {
-      "parameters": {
-        "batchSize": 1,
-        "options": {}
-      },
-      "id": "split-carousel-slides",
-      "name": "🔄 Split Slides",
-      "type": "n8n-nodes-base.splitInBatches",
-      "typeVersion": 3,
-      "position": [
-        1300,
         520
       ]
     },
@@ -214,14 +176,11 @@
     {
       "parameters": {
         "conditions": {
-          "conditions": [
+          "string": [
             {
-              "leftValue": "={{ $json.has_own_image }}",
-              "rightValue": true,
-              "operator": {
-                "type": "boolean",
-                "operation": "true"
-              }
+              "value1": "={{ String($json.has_own_image) }}",
+              "value2": "true",
+              "operation": "equal"
             }
           ]
         }
@@ -229,7 +188,7 @@
       "id": "check-own-image",
       "name": "🖼️ ¿Imagen propia?",
       "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
+      "typeVersion": 1,
       "position": [
         860,
         360
@@ -247,69 +206,6 @@
         1080,
         200
       ]
-    },
-    {
-      "parameters": {
-        "rules": {
-          "values": [
-            {
-              "conditions": {
-                "conditions": [
-                  {
-                    "leftValue": "={{ $json.image_model }}",
-                    "rightValue": "flux",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    }
-                  }
-                ]
-              },
-              "output": 0
-            },
-            {
-              "conditions": {
-                "conditions": [
-                  {
-                    "leftValue": "={{ $json.image_model }}",
-                    "rightValue": "ideogram",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    }
-                  }
-                ]
-              },
-              "output": 1
-            },
-            {
-              "conditions": {
-                "conditions": [
-                  {
-                    "leftValue": "={{ $json.image_model }}",
-                    "rightValue": "nanoBanana",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    }
-                  }
-                ]
-              },
-              "output": 2
-            }
-          ]
-        },
-        "fallbackOutput": 0
-      },
-      "id": "router-image-model",
-      "name": "🎨 Router — Modelo de imagen",
-      "type": "n8n-nodes-base.switch",
-      "typeVersion": 3,
-      "position": [
-        1080,
-        440
-      ],
-      "notes": "Rutas: 0=Flux, 1=Ideogram, 2=Nano Banana. Fallback → Flux."
     },
     {
       "parameters": {
@@ -422,7 +318,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Handle both single-post (from Normalizar URL imagen) and carousel (from Split Send WA Done)\nlet d;\ntry {\n  d = $('🗂️ Collect Image URLs').first().json;\n} catch(e) {\n  d = $input.first().json;\n}\n\nconst isCarousel = d.format === 'carousel';\n\nconst typeEmoji  = { educational:'📚', authority:'🎤', case_study:'🏆' };\nconst typeLabel  = { educational:'Educativo', authority:'Autoridad', case_study:'Caso de éxito' };\nconst modelInfo  = {\n  flux:       '⚡ Flux 2 Pro',\n  ideogram:   '🔤 Ideogram v3',\n  nanoBanana: '🍌 Nano Banana Pro',\n  custom:     '📎 Imagen propia',\n};\n\nconst igPreview = d.instagram?.caption?.substring(0, 280) || 'N/A';\nconst fbPreview = d.facebook?.caption?.substring(0, 180) || 'N/A';\nconst igDots = (d.instagram?.caption?.length || 0) > 280 ? '...' : '';\nconst fbDots = (d.facebook?.caption?.length || 0)  > 180 ? '...' : '';\n\nconst imageStatus = isCarousel\n  ? '🎠 ' + (d.image_urls?.length || 0) + ' imágenes generadas (carrusel)'\n  : '🖼️ ' + (d.final_image_url ? '✅ Imagen generada' : '⚠️ Sin imagen');\n\nconst formatLine = isCarousel\n  ? '\n🎠 *Formato:* Carrusel (' + d.num_images + ' slides)\n'\n  : '\n';\n\nconst msg = '🚀 *PROPULSAR CONTENT ENGINE*\n\n' +\n  (typeEmoji[d.type] || '📝') + ' *Tipo:* ' + (typeLabel[d.type] || d.type) + '\n' +\n  '📌 *Tema:* ' + d.topic + '\n' +\n  (d.angle ? '🎯 *Ángulo:* ' + d.angle + '\n' : '') +\n  '📱 *Redes:* ' + d.platforms.join(', ') + '\n' +\n  '🖼️ *Imagen:* ' + (modelInfo[d.image_model] || d.image_model) +\n  formatLine +\n  '\n━━━━━━━━━━━━━━━━\n' +\n  '📸 *INSTAGRAM:*\n' + igPreview + igDots +\n  '\n\n━━━━━━━━━━━━━━━━\n' +\n  '👥 *FACEBOOK:*\n' + fbPreview + fbDots +\n  '\n\n━━━━━━━━━━━━━━━━\n' +\n  imageStatus +\n  '\n\n*¿Publicar?*\n✅ *SI* para publicar\n❌ *NO* para cancelar';\n\nreturn [{ json: { ...d, whatsapp_message: msg, session_id: 'propulsar_' + Date.now() } }];"
+        "jsCode": "// Handle single-post and carousel — read from correct upstream node\nlet d;\ntry {\n  d = $('🗂️ Collect Image URLs').first().json;\n} catch(e1) {\n  try {\n    d = $('🔗 Normalizar URL imagen').first().json;\n  } catch(e2) {\n    d = $input.first().json;\n  }\n}\n\nconst isCarousel = d.format === 'carousel';\n\nconst typeEmoji  = { educational:'📚', authority:'🎤', case_study:'🏆' };\nconst typeLabel  = { educational:'Educativo', authority:'Autoridad', case_study:'Caso de éxito' };\nconst modelInfo  = {\n  flux:       '⚡ Flux 2 Pro',\n  ideogram:   '🔤 Ideogram v3',\n  nanoBanana: '🍌 Nano Banana Pro',\n  custom:     '📎 Imagen propia',\n};\n\nconst igPreview = d.instagram?.caption?.substring(0, 280) || 'N/A';\nconst fbPreview = d.facebook?.caption?.substring(0, 180) || 'N/A';\nconst igDots = (d.instagram?.caption?.length || 0) > 280 ? '...' : '';\nconst fbDots = (d.facebook?.caption?.length || 0)  > 180 ? '...' : '';\n\nconst imageStatus = isCarousel\n  ? `🎠 ${d.image_urls?.length || 0} imágenes generadas (carrusel)`\n  : `🖼️ ${d.final_image_url ? '✅ Imagen generada' : '⚠️ Sin imagen'}`;\n\nconst formatLine = isCarousel\n  ? `\\n🎠 *Formato:* Carrusel (${d.num_images} slides)`\n  : '';\n\nconst msg = `🚀 *PROPULSAR CONTENT ENGINE*\n\n${typeEmoji[d.type] || '📝'} *Tipo:* ${typeLabel[d.type] || d.type}\n📌 *Tema:* ${d.topic}\n${d.angle ? `🎯 *Ángulo:* ${d.angle}\\n` : ''}📱 *Redes:* ${(d.platforms || []).join(', ')}\n🖼️ *Imagen:* ${modelInfo[d.image_model] || d.image_model}${formatLine}\n\n━━━━━━━━━━━━━━━━\n📸 *INSTAGRAM:*\n${igPreview}${igDots}\n\n━━━━━━━━━━━━━━━━\n👥 *FACEBOOK:*\n${fbPreview}${fbDots}\n\n━━━━━━━━━━━━━━━━\n${imageStatus}\n\n*¿Publicar?*\n✅ *SI* para publicar\n❌ *NO* para cancelar`;\n\nreturn [{ json: { ...d, whatsapp_message: msg, session_id: `propulsar_${Date.now()}` } }];"
       },
       "id": "prepare-whatsapp",
       "name": "📱 Preparar mensaje WA",
@@ -452,7 +348,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"from\": \"{{ $env.YCLOUD_WHATSAPP_NUMBER }}\",\n  \"to\":   \"{{ $json.approval_number }}\",\n  \"type\": \"text\",\n  \"text\": { \"body\": \"{{ $json.whatsapp_message }}\" }\n}",
+        "jsonBody": "={{ JSON.stringify({ \"from\": $env.YCLOUD_WHATSAPP_NUMBER, \"to\": $json.approval_number, \"type\": \"text\", \"text\": { \"body\": $json.whatsapp_message } }) }}",
         "options": {}
       },
       "id": "send-whatsapp",
@@ -499,14 +395,11 @@
     {
       "parameters": {
         "conditions": {
-          "conditions": [
+          "string": [
             {
-              "leftValue": "={{ $json.body?.message?.text?.body?.trim().toUpperCase() }}",
-              "rightValue": "SI",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
+              "value1": "={{ $json.body?.message?.text?.body?.trim().toUpperCase() }}",
+              "value2": "SI",
+              "operation": "equal"
             }
           ]
         }
@@ -514,7 +407,7 @@
       "id": "check-approval",
       "name": "✅ ¿Aprobado?",
       "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
+      "typeVersion": 1,
       "position": [
         2400,
         460
@@ -548,7 +441,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const carousel = $('🔧 Parsear prompts carrusel').first().json;\nconst loopItems = $input.all();\n\n// IMG-02: Normalize and validate all image URLs\nconst imageUrls = loopItems.map(item => {\n  const url = item.json.data?.[0]?.url || null;\n  if (url && typeof url === 'string' && url.startsWith('https://')) {\n    return url.split('?')[0]; // Strip query params for clean URL\n  }\n  return null;\n}).filter(Boolean);\n\nif (imageUrls.length !== carousel.num_images) {\n  throw new Error('Se generaron ' + imageUrls.length + ' imagenes, se esperaban ' + carousel.num_images + '. Faltan slides.');\n}\n\nreturn [{\n  json: {\n    instagram:       carousel.instagram,\n    facebook:        carousel.facebook,\n    topic:           carousel.topic,\n    type:            carousel.type,\n    angle:           carousel.angle || null,\n    platforms:       carousel.platforms,\n    image_model:     'ideogram',\n    approval_number: carousel.approval_number,\n    timestamp:       carousel.timestamp,\n    format:          'carousel',\n    num_images:      carousel.num_images,\n    image_urls:      imageUrls,\n    final_image_url: imageUrls[0] || null,\n  }\n}];",
+        "jsCode": "const carousel = $('🔧 Parsear prompts carrusel').first().json;\nconst loopItems = $input.all();\n\n// IMG-02: Normalize and validate all image URLs\nconst imageUrls = loopItems.map(item => {\n  const url = item.json.data?.[0]?.url || null;\n  if (url && typeof url === 'string' && url.startsWith('https://')) {\n    return url; // Keep full URL with auth params (exp, sig)\n  }\n  return null;\n}).filter(Boolean);\n\nif (imageUrls.length !== carousel.num_images) {\n  throw new Error('Se generaron ' + imageUrls.length + ' imagenes, se esperaban ' + carousel.num_images + '. Faltan slides.');\n}\n\nreturn [{\n  json: {\n    instagram:       carousel.instagram,\n    facebook:        carousel.facebook,\n    topic:           carousel.topic,\n    type:            carousel.type,\n    angle:           carousel.angle || null,\n    platforms:       carousel.platforms,\n    image_model:     'ideogram',\n    approval_number: carousel.approval_number,\n    timestamp:       carousel.timestamp,\n    format:          'carousel',\n    num_images:      carousel.num_images,\n    image_urls:      imageUrls,\n    final_image_url: imageUrls[0] || null,\n  }\n}];",
         "mode": "runOnceForAllItems"
       },
       "id": "collect-carousel-urls",
@@ -576,22 +469,8 @@
     },
     {
       "parameters": {
-        "batchSize": 1,
-        "options": {}
-      },
-      "id": "split-send-wa",
-      "name": "🔄 Split Send WA",
-      "type": "n8n-nodes-base.splitInBatches",
-      "typeVersion": 3,
-      "position": [
-        2180,
-        520
-      ]
-    },
-    {
-      "parameters": {
         "method": "POST",
-        "url": "https://api.ycloud.com/v2/whatsapp/messages/sendDirectly",
+        "url": "https://api.ycloud.com/v2/whatsapp/messages",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -607,7 +486,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"from\": \"{{ $env.YCLOUD_WHATSAPP_NUMBER }}\",\n  \"to\":   \"{{ $json.approval_number }}\",\n  \"type\": \"image\",\n  \"image\": {\n    \"link\": \"{{ $json.current_image_url }}\",\n    \"caption\": \"Slide {{ $json.slide_index }} de {{ $json.num_images }}\"\n  }\n}",
+        "jsonBody": "={{ JSON.stringify({ \"from\": $env.YCLOUD_WHATSAPP_NUMBER, \"to\": $json.approval_number, \"type\": \"image\", \"image\": { \"link\": $json.current_image_url, \"caption\": \"Slide \" + $json.slide_index + \" de \" + $json.num_images } }) }}",
         "options": {}
       },
       "id": "send-wa-image",
@@ -656,6 +535,101 @@
           "name": "Google Sheets"
         }
       }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.body.format }}",
+              "value2": "carousel",
+              "operation": "equal"
+            }
+          ]
+        }
+      },
+      "id": "carousel-check",
+      "name": "🔀 ¿Carrusel?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        420,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.ycloud.com/v2/whatsapp/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $env.YCLOUD_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ \"from\": $env.YCLOUD_WHATSAPP_NUMBER, \"to\": $json.approval_number, \"type\": \"image\", \"image\": { \"link\": $json.final_image_url, \"caption\": \"Preview — \" + $json.topic } }) }}",
+        "options": {}
+      },
+      "id": "send-single-image",
+      "name": "📤 Enviar preview imagen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        460
+      ],
+      "notes": "Single-post: sends image preview before text message"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.image_model }}",
+              "value2": "ideogram",
+              "operation": "equal"
+            }
+          ]
+        }
+      },
+      "id": "router-if-ideogram",
+      "name": "🎨 ¿Ideogram?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1080,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.image_model }}",
+              "value2": "nanoBanana",
+              "operation": "equal"
+            }
+          ]
+        }
+      },
+      "id": "router-if-nano",
+      "name": "🎨 ¿NanoBanana?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        540
+      ]
     }
   ],
   "connections": {
@@ -719,25 +693,7 @@
       "main": [
         [
           {
-            "node": "🔄 Split Slides",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "🔄 Split Slides": {
-      "main": [
-        [
-          {
             "node": "🔤 Ideogram — Slide",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "🗂️ Collect Image URLs",
             "type": "main",
             "index": 0
           }
@@ -748,7 +704,7 @@
       "main": [
         [
           {
-            "node": "🔄 Split Slides",
+            "node": "🗂️ Collect Image URLs",
             "type": "main",
             "index": 0
           }
@@ -770,25 +726,7 @@
       "main": [
         [
           {
-            "node": "🔄 Split Send WA",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "🔄 Split Send WA": {
-      "main": [
-        [
-          {
             "node": "📤 Enviar imagen WA",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "📱 Preparar mensaje WA",
             "type": "main",
             "index": 0
           }
@@ -799,7 +737,7 @@
       "main": [
         [
           {
-            "node": "🔄 Split Send WA",
+            "node": "📱 Preparar mensaje WA",
             "type": "main",
             "index": 0
           }
@@ -839,7 +777,7 @@
         ],
         [
           {
-            "node": "🎨 Router — Modelo de imagen",
+            "node": "🎨 ¿Ideogram?",
             "type": "main",
             "index": 0
           }
@@ -851,31 +789,6 @@
         [
           {
             "node": "📱 Preparar mensaje WA",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "🎨 Router — Modelo de imagen": {
-      "main": [
-        [
-          {
-            "node": "⚡ Flux 2 Pro (FAL.AI)",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "🔤 Ideogram v3",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "🍌 Nano Banana Pro (FAL.AI)",
             "type": "main",
             "index": 0
           }
@@ -919,7 +832,7 @@
       "main": [
         [
           {
-            "node": "📱 Preparar mensaje WA",
+            "node": "📤 Enviar preview imagen",
             "type": "main",
             "index": 0
           }
@@ -976,6 +889,53 @@
         [
           {
             "node": "📊 Google Sheets Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📤 Enviar preview imagen": {
+      "main": [
+        [
+          {
+            "node": "📱 Preparar mensaje WA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🎨 ¿Ideogram?": {
+      "main": [
+        [
+          {
+            "node": "🔤 Ideogram v3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "🎨 ¿NanoBanana?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🎨 ¿NanoBanana?": {
+      "main": [
+        [
+          {
+            "node": "🍌 Nano Banana Pro (FAL.AI)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "⚡ Flux 2 Pro (FAL.AI)",
             "type": "main",
             "index": 0
           }

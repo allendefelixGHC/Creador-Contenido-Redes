@@ -18,17 +18,19 @@ const isCarousel = process.argv.includes("--carousel");
 const slidesIndex = process.argv.indexOf("--slides");
 const numSlides = slidesIndex !== -1 ? parseInt(process.argv[slidesIndex + 1]) || 3 : 3;
 
-// --- Single-post brief (original, unchanged) ---
+// --- Single-post brief (matches wizard/run.js output schema) ---
 const singlePostBrief = {
   topic: "TEST — Cómo automatizar el seguimiento de clientes con WhatsApp",
   type: "educational",
   platforms: ["instagram", "facebook"],
   angle: "enfocado en PYMEs de servicios",
-  has_image: false,
+  image_model: "ideogram",
+  fal_model_id: null,
+  has_own_image: false,
   image_url: null,
-  approval_number: process.env.WHATSAPP_APPROVAL_NUMBER,
+  has_text_in_image: true,
+  approval_number: process.env.WHATSAPP_APPROVAL_NUMBER || "34612345678",
   timestamp: new Date().toISOString(),
-  _test: true, // Flag para que n8n pueda detectar que es un test
 };
 
 // --- Carousel brief (14 fields matching exact Phase 1 schema) ---
