@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 ## Current Position
 
 Phase: 3 of 3 (n8n Image Generation + WhatsApp Preview)
-Plan: 2 of 3 in current phase
-Status: In progress
-Last activity: 2026-04-06 — Plan 03-02 complete: WA image loop + carousel-aware approval message
+Plan: 3 of 3 in current phase
+Status: In progress — awaiting human verification (checkpoint)
+Last activity: 2026-04-06 — Plan 03-03 tasks 1-2 complete: structural validation + test script updated
 
 Progress: [████████░░] 80%
 
@@ -72,5 +72,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-04-06
-Stopped at: Completed 03-02-PLAN.md — WA image loop + carousel-aware approval message
+Stopped at: 03-03-PLAN.md Task 3 — checkpoint:human-verify (upload to n8n, test both paths)
 Resume file: None
