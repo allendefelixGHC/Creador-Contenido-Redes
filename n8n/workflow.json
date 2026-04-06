@@ -443,6 +443,54 @@
 
     {
       "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst urls = data.image_urls;\n\nreturn urls.map((url, idx) => ({\n  json: {\n    current_image_url: url,\n    slide_index:       idx + 1,\n    num_images:        data.num_images,\n    approval_number:   data.approval_number,\n    _carousel_data:    data,\n  }\n}));",
+        "mode": "runOnceForAllItems"
+      },
+      "id": "split-wa-urls",
+      "name": "📨 Split URLs WA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1960, 520]
+    },
+
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "split-send-wa",
+      "name": "🔄 Split Send WA",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [2180, 520]
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.ycloud.com/v2/whatsapp/messages/sendDirectly",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-API-Key",    "value": "={{ $env.YCLOUD_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"{{ $env.YCLOUD_WHATSAPP_NUMBER }}\",\n  \"to\":   \"{{ $json.approval_number }}\",\n  \"type\": \"image\",\n  \"image\": {\n    \"link\": \"{{ $json.current_image_url }}\",\n    \"caption\": \"Slide {{ $json.slide_index }} de {{ $json.num_images }}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "send-wa-image",
+      "name": "📤 Enviar imagen WA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2400, 620],
+      "notes": "YCloud sendDirectly — sends one carousel image per loop iteration"
+    },
+
+    {
+      "parameters": {
         "documentId": { "value": "={{ $env.GOOGLE_SHEETS_ID }}" },
         "sheetName":  { "value": "Log" },
         "columns": {
