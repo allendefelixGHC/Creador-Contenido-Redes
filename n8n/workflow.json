@@ -431,6 +431,18 @@
 
     {
       "parameters": {
+        "jsCode": "const carousel = $('🔧 Parsear prompts carrusel').first().json;\nconst loopItems = $input.all();\n\n// IMG-02: Normalize and validate all image URLs\nconst imageUrls = loopItems.map(item => {\n  const url = item.json.data?.[0]?.url || null;\n  if (url && typeof url === 'string' && url.startsWith('https://')) {\n    return url.split('?')[0]; // Strip query params for clean URL\n  }\n  return null;\n}).filter(Boolean);\n\nif (imageUrls.length !== carousel.num_images) {\n  throw new Error('Se generaron ' + imageUrls.length + ' imagenes, se esperaban ' + carousel.num_images + '. Faltan slides.');\n}\n\nreturn [{\n  json: {\n    instagram:       carousel.instagram,\n    facebook:        carousel.facebook,\n    topic:           carousel.topic,\n    type:            carousel.type,\n    angle:           carousel.angle || null,\n    platforms:       carousel.platforms,\n    image_model:     'ideogram',\n    approval_number: carousel.approval_number,\n    timestamp:       carousel.timestamp,\n    format:          'carousel',\n    num_images:      carousel.num_images,\n    image_urls:      imageUrls,\n    final_image_url: imageUrls[0] || null,\n  }\n}];",
+        "mode": "runOnceForAllItems"
+      },
+      "id": "collect-carousel-urls",
+      "name": "🗂️ Collect Image URLs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1740, 520]
+    },
+
+    {
+      "parameters": {
         "documentId": { "value": "={{ $env.GOOGLE_SHEETS_ID }}" },
         "sheetName":  { "value": "Log" },
         "columns": {
@@ -474,6 +486,21 @@
     },
     "🎠 GPT-4o — Prompts Carrusel": {
       "main": [[{ "node": "🔧 Parsear prompts carrusel", "type": "main", "index": 0 }]]
+    },
+    "🔧 Parsear prompts carrusel": {
+      "main": [[{ "node": "🎠 Explode Slides", "type": "main", "index": 0 }]]
+    },
+    "🎠 Explode Slides": {
+      "main": [[{ "node": "🔄 Split Slides", "type": "main", "index": 0 }]]
+    },
+    "🔄 Split Slides": {
+      "main": [
+        [{ "node": "🔤 Ideogram — Slide", "type": "main", "index": 0 }],
+        [{ "node": "🗂️ Collect Image URLs", "type": "main", "index": 0 }]
+      ]
+    },
+    "🔤 Ideogram — Slide": {
+      "main": [[{ "node": "🔄 Split Slides", "type": "main", "index": 0 }]]
     },
     "🤖 GPT-4o — Texto":    { "main": [[{ "node": "🔧 Parsear contenido",      "type": "main", "index": 0 }]] },
     "🔧 Parsear contenido": { "main": [[{ "node": "🖼️ ¿Imagen propia?",        "type": "main", "index": 0 }]] },
