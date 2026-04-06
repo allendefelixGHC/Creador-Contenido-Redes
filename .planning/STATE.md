@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 ## Current Position
 
 Phase: 3 of 3 (n8n Image Generation + WhatsApp Preview)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-04-06 — Plan 03-01 complete: Ideogram carousel loop (4 nodes + connections)
+Last activity: 2026-04-06 — Plan 03-02 complete: WA image loop + carousel-aware approval message
 
-Progress: [███████░░░] 70%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
-- Average duration: 2.6 min
-- Total execution time: 13 min
+- Total plans completed: 6
+- Average duration: 3.2 min
+- Total execution time: 19 min
 
 **By Phase:**
 
@@ -29,7 +29,7 @@ Progress: [███████░░░] 70%
 |-------|-------|-------|----------|
 | 01-wizard-carousel-flow | 2 | 3 min | 1.5 min |
 | 02-n8n-content-generation | 2 | 8 min | 4 min |
-| 03-n8n-image-generation-whatsapp-preview | 1 | 2 min | 2 min |
+| 03-n8n-image-generation-whatsapp-preview | 2 | 8 min | 4 min |
 
 **Recent Trend:**
 - Last 5 plans: 2.6 min
@@ -57,6 +57,8 @@ Recent decisions affecting current work:
 - [Phase 02]: n8n workflow ID: Qql7mvYRxKBsPZ5t — uploaded via API, credentials linked manually
 - [Phase 03-01]: SplitInBatches batchSize=1 — sequential Ideogram calls, loop back-edge is the key n8n loop pattern
 - [Phase 03-01]: Collect Image URLs validates slide count vs num_images, strips query params from Ideogram URLs
+- [Phase 03]: YCloud sendDirectly used (not /messages) — synchronous confirmation before sending next slide
+- [Phase 03]: Preparar mensaje WA uses try/catch to read Collect Image URLs node first, falls back to $input for single-post path
 
 ### Pending Todos
 
@@ -70,5 +72,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-04-06
-Stopped at: Completed 03-01-PLAN.md — carousel Ideogram loop in workflow.json
+Stopped at: Completed 03-02-PLAN.md — WA image loop + carousel-aware approval message
 Resume file: None
