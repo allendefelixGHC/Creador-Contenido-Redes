@@ -5,8 +5,8 @@
  *
  * Usage:
  *   node scripts/test-webhook.js                       — test single post (default)
- *   node scripts/test-webhook.js --carousel            — test carousel (5 slides default)
- *   node scripts/test-webhook.js --carousel --slides 7 — test carousel with 7 slides
+ *   node scripts/test-webhook.js --carousel            — test carousel (3 slides default, $0.18)
+ *   node scripts/test-webhook.js --carousel --slides 5 — test carousel with 5 slides
  */
 
 const https = require("https");
@@ -16,7 +16,7 @@ require("dotenv").config({ path: require("path").join(__dirname, "../.env") });
 // --- CLI flags ---
 const isCarousel = process.argv.includes("--carousel");
 const slidesIndex = process.argv.indexOf("--slides");
-const numSlides = slidesIndex !== -1 ? parseInt(process.argv[slidesIndex + 1]) || 5 : 5;
+const numSlides = slidesIndex !== -1 ? parseInt(process.argv[slidesIndex + 1]) || 3 : 3;
 
 // --- Single-post brief (original, unchanged) ---
 const singlePostBrief = {
@@ -32,11 +32,14 @@ const singlePostBrief = {
 };
 
 // --- Carousel brief (14 fields matching exact Phase 1 schema) ---
+// Uses num_images: 3 by default — smallest practical carousel, cheaper for testing ($0.18 total)
 const carouselBrief = {
-  topic: "5 formas de automatizar tu negocio con IA en 2026",
+  topic: "5 herramientas IA que todo negocio necesita en 2026",
   type: "educational",
-  angle: "Guía paso a paso para dueños de PYMEs",
+  angle: "Herramientas prácticas con resultados medibles",
   platforms: ["instagram", "facebook"],
+  format: "carousel",
+  num_images: numSlides,
   image_model: "ideogram",
   fal_model_id: null,
   has_own_image: false,
@@ -44,9 +47,6 @@ const carouselBrief = {
   has_text_in_image: true,
   approval_number: process.env.WHATSAPP_APPROVAL_NUMBER || "34612345678",
   timestamp: new Date().toISOString(),
-  format: "carousel",
-  num_images: numSlides,
-  image_prompts: [],
 };
 
 // --- Select brief based on mode ---
