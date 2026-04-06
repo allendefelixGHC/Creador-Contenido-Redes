@@ -87,6 +87,54 @@
 
     {
       "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst prompts = data.image_prompts;\n\nreturn prompts.map(slide => ({\n  json: {\n    slide_num:       slide.slide_num,\n    texto_overlay:   slide.texto_overlay,\n    prompt:          slide.prompt,\n    approval_number: data.approval_number,\n    num_images:      data.num_images,\n    topic:           data.topic,\n    type:            data.type,\n  }\n}));",
+        "mode": "runOnceForAllItems"
+      },
+      "id": "explode-carousel-slides",
+      "name": "🎠 Explode Slides",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1080, 520]
+    },
+
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "split-carousel-slides",
+      "name": "🔄 Split Slides",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [1300, 520]
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.ideogram.ai/generate",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Api-Key",      "value": "={{ $env.IDEOGRAM_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"image_request\": {\n    \"prompt\": \"{{ $json.prompt }}\",\n    \"aspect_ratio\": \"ASPECT_1_1\",\n    \"model\": \"V_2\",\n    \"magic_prompt_option\": \"AUTO\",\n    \"style_type\": \"DESIGN\"\n  }\n}",
+        "options": {}
+      },
+      "id": "ideogram-slide",
+      "name": "🔤 Ideogram — Slide",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1520, 520],
+      "notes": "Ideogram v2 per carousel slide — called once per slide via SplitInBatches loop"
+    },
+
+    {
+      "parameters": {
         "model": "gpt-4o",
         "messages": {
           "values": [
