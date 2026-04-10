@@ -116,49 +116,49 @@ Explicitly excluded. Documented to prevent scope creep.
 
 ## Traceability
 
-Empty initially. Updated during roadmap creation by gsd-roadmapper.
+Updated by gsd-roadmapper — 2026-04-10.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| REHOST-01 | — | Pending |
-| REHOST-02 | — | Pending |
-| REHOST-03 | — | Pending |
-| REHOST-04 | — | Pending |
-| REHOST-05 | — | Pending |
-| REHOST-06 | — | Pending |
-| IGPUB-01 | — | Pending |
-| IGPUB-02 | — | Pending |
-| IGPUB-03 | — | Pending |
-| IGPUB-04 | — | Pending |
-| IGPUB-05 | — | Pending |
-| IGPUB-06 | — | Pending |
-| FBPUB-01 | — | Pending |
-| FBPUB-02 | — | Pending |
-| FBPUB-03 | — | Pending |
-| FBPUB-04 | — | Pending |
-| WIZ-07 | — | Pending |
-| WIZ-08 | — | Pending |
-| WIZ-09 | — | Pending |
-| SCHED-01 | — | Pending |
-| SCHED-02 | — | Pending |
-| SCHED-03 | — | Pending |
-| SCHED-04 | — | Pending |
-| NOTIF-01 | — | Pending |
-| NOTIF-02 | — | Pending |
-| NOTIF-03 | — | Pending |
-| LOG-01 | — | Pending |
-| LOG-02 | — | Pending |
-| LOG-03 | — | Pending |
-| ERR-01 | — | Pending |
-| ERR-02 | — | Pending |
-| ERR-03 | — | Pending |
-| ERR-04 | — | Pending |
+| REHOST-01 | Phase 4 | Pending |
+| REHOST-02 | Phase 4 | Pending |
+| REHOST-03 | Phase 4 | Pending |
+| REHOST-04 | Phase 4 | Pending |
+| REHOST-05 | Phase 4 | Pending |
+| REHOST-06 | Phase 9 | Pending |
+| IGPUB-01 | Phase 5 | Pending |
+| IGPUB-02 | Phase 7 | Pending |
+| IGPUB-03 | Phase 5 | Pending |
+| IGPUB-04 | Phase 5 | Pending |
+| IGPUB-05 | Phase 5 | Pending |
+| IGPUB-06 | Phase 9 | Pending |
+| FBPUB-01 | Phase 6 | Pending |
+| FBPUB-02 | Phase 7 | Pending |
+| FBPUB-03 | Phase 6 | Pending |
+| FBPUB-04 | Phase 7 | Pending |
+| WIZ-07 | Phase 8 | Pending |
+| WIZ-08 | Phase 8 | Pending |
+| WIZ-09 | Phase 8 | Pending |
+| SCHED-01 | Phase 8 | Pending |
+| SCHED-02 | Phase 8 | Pending |
+| SCHED-03 | Phase 8 | Pending |
+| SCHED-04 | Phase 8 | Pending |
+| NOTIF-01 | Phase 5 | Pending |
+| NOTIF-02 | Phase 9 | Pending |
+| NOTIF-03 | Phase 9 | Pending |
+| LOG-01 | Phase 5 | Pending |
+| LOG-02 | Phase 5 | Pending |
+| LOG-03 | Phase 9 | Pending |
+| ERR-01 | Phase 9 | Pending |
+| ERR-02 | Phase 5 | Pending |
+| ERR-03 | Phase 9 | Pending |
+| ERR-04 | Phase 9 | Pending |
 
 **Coverage:**
-- v1.1 requirements: 32 total
-- Mapped to phases: 0 (filled by roadmapper)
-- Unmapped: 32 ⚠️
+- v1.1 requirements: 33 total (note: header originally said 32 — REHOST-06 was the 33rd, confirmed present)
+- Mapped to phases: 33/33
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-10*
-*Last updated: 2026-04-10 after initial v1.1 definition*
+*Last updated: 2026-04-10 — traceability filled by gsd-roadmapper*
