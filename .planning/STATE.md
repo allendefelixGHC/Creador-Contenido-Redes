@@ -58,5 +58,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-04-10
-Stopped at: v1.1 roadmap created — 6 phases (4-9) defined, all 33 requirements mapped, ready to plan Phase 4
-Resume file: None
+Stopped at: Phase 4 context gathered
+Resume file: .planning/phases/04-azure-blob-re-hosting/04-CONTEXT.md
