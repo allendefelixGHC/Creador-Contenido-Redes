@@ -1,66 +1,104 @@
-# Propulsar Content Engine — Carousel Support
+# Propulsar Content Engine
 
 ## What This Is
 
-Extension of the existing Propulsar Content Engine v3 to support Instagram carousel posts (multi-image). The Wizard and n8n workflow currently generate single-image posts. This adds the ability to generate carousels with 1-10 slides, each with its own AI-generated image with text overlay, following Propulsar's visual identity (dark backgrounds, purple-magenta gradients, bold Spanish text).
+AI-powered content generation engine for Propulsar.ai's social media. Interactive Wizard (wizard/run.js) + n8n workflow on Azure generate Instagram/Facebook posts — both single images and multi-slide carousels — with AI-generated text and images in Propulsar's visual identity. Content is previewed via WhatsApp (YCloud), approved with SI/NO, and logged to Google Sheets.
+
+**Shipped as of v1.0:** Full carousel support (3-10 slides), Ideogram v3 text-in-image, sequential image generation, individual WhatsApp previews per slide, SI/NO approval gate.
 
 ## Core Value
 
-Generate complete carousel posts (multiple images + captions) in one wizard run, with each slide having a unique AI-generated image with contextual text overlay — ready for Instagram publication.
+Generate complete social media posts (single or carousel) in one wizard run, each with AI-generated images that include readable Spanish text overlays following Propulsar's brand — previewed via WhatsApp before publication.
+
+## Current State
+
+**v1.0 shipped 2026-04-10.** Pipeline live: Wizard → n8n webhook → GPT-4o text → Ideogram/Flux/Nano Banana images → WhatsApp preview → SI/NO approval → Google Sheets log.
+
+**Stack:** Node.js Wizard, n8n 2.14.2 on Azure Container Apps (`propulsar-n8n`), Ideogram v3 API, YCloud WhatsApp, Supabase (session state), Google Sheets (log).
+
+**Pending for v1.1:** Automatic publishing to Instagram/Facebook via Meta Graph API. Tokens are now available (META_PAGE_TOKEN, INSTAGRAM_ACCOUNT_ID, FACEBOOK_PAGE_ID configured in `.env` and Azure Container App environment variables on 2026-04-10).
 
 ## Requirements
 
 ### Validated
 
-- ✓ Single-image post generation via Wizard + n8n — existing
-- ✓ GPT-4o text generation for Instagram + Facebook captions — existing
-- ✓ Image generation via Flux 2 Pro, Ideogram v3, Nano Banana Pro — existing
-- ✓ WhatsApp preview and approval flow — existing
-- ✓ Webhook communication between Wizard and n8n — existing
+- ✓ Single-image post generation via Wizard + n8n — pre-v1.0
+- ✓ GPT-4o text generation for Instagram + Facebook captions — pre-v1.0
+- ✓ Image generation via Flux 2 Pro, Ideogram v3, Nano Banana Pro — pre-v1.0
+- ✓ WhatsApp preview and approval flow — pre-v1.0
+- ✓ Webhook communication between Wizard and n8n — pre-v1.0
+- ✓ Wizard asks format: single post or carousel — v1.0
+- ✓ Wizard asks number of slides for carousel (3-10, default 5) — v1.0
+- ✓ For carousels, `has_text_in_image` is always true (Ideogram default) — v1.0
+- ✓ GPT-4o generates one image prompt per slide with text overlay content — v1.0
+- ✓ AI chooses carousel structure (narrative/listicle/step-by-step) — v1.0
+- ✓ n8n generates N images sequentially (one per slide) — v1.0
+- ✓ All carousel images sent via WhatsApp as preview (individual messages) — v1.0
+- ✓ Brief JSON includes `num_images` and `image_prompts` array — v1.0
+- ✓ Single post flow unchanged (backward compatible) — v1.0
+- ✓ Single post also sends image preview to WhatsApp before text — v1.0 (added during 03-03 verification)
 
 ### Active
 
-- [ ] Wizard asks format: single post or carousel
-- [ ] Wizard asks number of slides for carousel (3-10, default 5)
-- [ ] For carousels, has_text_in_image is always true (Ideogram default)
-- [ ] GPT-4o generates one image prompt per slide with text overlay content
-- [ ] AI chooses carousel structure based on topic/type (narrative, listicle, step-by-step, etc.)
-- [ ] n8n generates N images in parallel or sequence (one per slide)
-- [ ] All carousel images sent via WhatsApp as preview
-- [ ] Brief JSON includes num_images and image_prompts array
-- [ ] Single post flow remains unchanged (backward compatible)
+(None — defined fresh for v1.1 via `/gsd:new-milestone`)
 
 ### Out of Scope
 
-- Frontend/dashboard UI — separate project, will be built after
-- Instagram API carousel publishing — requires separate Meta API integration
-- Video slides — only static images for now
+- Frontend/dashboard UI — separate project
+- Video slides — static images only
 - Manual text editing per slide in Wizard — AI decides all content
+- Mobile app — server-side pipeline only
 
 ## Context
 
-- Existing codebase: Wizard (wizard/run.js) + n8n workflow on Azure Container App
-- n8n 2.14.2 blocks $env access and require('https') in Code nodes — all API calls must use HTTP Request nodes with hardcoded keys or this.helpers.httpRequest
-- Propulsar visual style: dark background #1a1a2e, purple-magenta gradients, bold readable typography in Spanish
-- Ideogram v3 is best for text-in-image (90-95% accuracy) — default for carousels
-- Current workflow ID in n8n changes with each upload (API deploy pattern)
-- OpenAI credential must be manually linked after each workflow upload
+- **Codebase:** Wizard (wizard/run.js) + n8n workflow on Azure Container Apps (`propulsar-n8n` resource group `propulsar-production`, westeurope)
+- **n8n version 2.14.2 quirks:**
+  - IF v2 and Switch v3 condition evaluation is broken — always routes to TRUE/first-output. Use IF v1 with string comparisons for all routing.
+  - SplitInBatches Done branch cannot reference loop body nodes via `$()`. Removed entirely — n8n processes N items sequentially natively when feeding an HTTP Request node.
+  - No `$env` access in Code nodes for API keys (allowed via HTTP Request headers).
+  - Code nodes cannot `require()` modules — use `$helpers.httpRequest` for HTTP.
+- **Deployment pattern:** workflow.json uploaded via n8n API (`N8N_API_KEY` in .env). Credentials (OpenAI, Google Sheets, Supabase) require manual linking after each upload — API does not handle credential binding.
+- **Ideogram ephemeral URLs:** Signed URLs with `?exp=&sig=` query params. Expire in 1-24h. NEVER strip query params from these URLs. For publishing (v1.1+), must download and re-host images before sending to Meta Graph API.
+- **Visual brand:** dark background `#1a1a2e`, purple-magenta gradient accents, bold readable Spanish typography — applied to every image prompt.
 
 ## Constraints
 
-- **n8n restrictions**: No $env, no require() in Code nodes. Use HTTP Request nodes or this.helpers.httpRequest
-- **API costs**: Each carousel image costs $0.06 (Ideogram). A 7-slide carousel = ~$0.42
-- **WhatsApp**: YCloud API sends images one at a time, no native carousel preview
-- **n8n deploy**: Each workflow upload requires manual OpenAI credential linking
+- **n8n restrictions:** No `$env` in Code nodes, no `require()`. Use HTTP Request nodes or `$helpers.httpRequest`.
+- **Conditional routing:** Only IF v1 with string comparisons works reliably in n8n 2.14.2.
+- **API costs per carousel:** $0.06 per Ideogram image × N slides. A 7-slide carousel ≈ $0.42.
+- **WhatsApp:** YCloud sends images one at a time — carousel preview is N separate messages (expected).
+- **Credentials:** Each workflow upload requires manual OpenAI credential linking in n8n UI.
+- **Meta token lifetime:** The Page Access Token is long-lived but depends on Susana maintaining admin role on the Propulsar AI Facebook page. If she loses admin, token stops working.
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Ideogram as default for carousels | Best text-in-image accuracy (90-95%), essential for slides with overlay text | — Pending |
-| AI decides slide structure | User wants full automation, AI chooses narrative/listicle/steps based on topic | — Pending |
-| Both single and carousel available | User wants flexibility, not all content needs to be carousel | — Pending |
-| 3-10 slides range | Instagram allows up to 10, minimum 3 for meaningful carousel | — Pending |
+| Ideogram v3 as default for carousels | 90-95% text-in-image accuracy, essential for slide overlays | ✓ Good — all v1.0 carousels used Ideogram successfully |
+| AI decides slide structure | Full automation, user never selects narrative/listicle/steps | ✓ Good — GPT-4o chooses structure per topic/type |
+| Both single and carousel available | Not all content needs to be carousel | ✓ Good — format selector in Wizard works |
+| 3-10 slides range | Instagram allows up to 10, 3 is minimum for meaningful carousel | ✓ Good |
+| Sequential Ideogram generation (not parallel) | Safer with rate limits, simpler loop pattern | ✓ Good — no rate limit errors in testing |
+| Ideogram v3 auto-set for carousels, user can't override | Only model that does reliable text-in-image | ✓ Good |
+| `...(isCarousel && {...})` spread for brief JSON | Zero extra fields for single-post, 14 fields for carousel | ✓ Good — single-post JSON unchanged |
+| Carousel GPT-4o call includes captions + all prompts in one call | One API call is faster and cheaper than N | ✓ Good |
+| Each slide prompt self-contained with Propulsar style | GPT-4o only called once, so each prompt must carry all style constraints | ✓ Good |
+| n8n workflow uploaded via API (not manual export/import) | Faster iteration, scriptable, version-controllable | ✓ Good — but credentials still manual |
+| YCloud `/whatsapp/messages` endpoint (not `sendDirectly`) | Used by working text node, consistent behavior across image/text | ✓ Good |
+| Preparar mensaje WA reads from multiple upstream nodes via try/catch | Handles 3 paths: carousel, single-post generated, custom image | ✓ Good |
+| IF v1 with string comparisons everywhere | IF v2/Switch v3 routing broken in n8n 2.14.2 | ⚠ Workaround — needed until n8n version upgrade |
+| SplitInBatches removed from loops | n8n natively processes N items sequentially in HTTP Request nodes; SplitInBatches Done branch can't reference loop body | ⚠ Workaround — needed until n8n version upgrade |
+| Meta tokens generated from Susana's account, not Felix | Susana is direct admin of Propulsar page; Felix's Graph API calls returned empty `data` arrays | ✓ Good — tokens verified working 2026-04-10 |
+
+## Next Milestone Goals (v1.1)
+
+**Theme:** Automatic Publishing
+
+- Publish approved carousels directly to Instagram via Meta Graph API (carousel container endpoint)
+- Publish single-post to Instagram and Facebook
+- Re-host Ideogram images before publishing (ephemeral URLs don't work with Meta)
+- Log published post URLs to Google Sheets (not just generation success)
+- Handle publishing errors gracefully with retry logic
 
 ---
-*Last updated: 2026-04-03 after initialization*
+*Last updated: 2026-04-10 after v1.0 Carousel Support milestone*
