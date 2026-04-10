@@ -1,0 +1,360 @@
+{
+  "name": "Re-host Images to Azure Blob",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "sub-trigger",
+      "name": "▶️ Execute Sub-workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ],
+      "notes": "Expected input shape (passed from main workflow):\n{\n  \"image_urls\": [{ \"index\": 1, \"url\": \"https://...\" }, { \"index\": 2, \"url\": \"https://...\" }],\n  \"post_id\": \"propulsar_1712790000000\",\n  \"approval_number\": \"34612345678\"\n}"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Fan out the incoming image_urls array into one item per image.\n// Carry post_id and approval_number on every item for downstream access.\nconst input = $input.first().json;\nconst urls = input.image_urls || [];\nconst postId = input.post_id;\nconst approvalNumber = input.approval_number;\n\nif (!Array.isArray(urls) || urls.length === 0) {\n  throw new Error('Sub-workflow input missing image_urls array');\n}\n\nreturn urls.map((entry) => ({\n  json: {\n    slide_index: entry.index,\n    source_url: entry.url,\n    post_id: postId,\n    approval_number: approvalNumber,\n  }\n}));",
+        "mode": "runOnceForAllItems"
+      },
+      "id": "explode-urls",
+      "name": "🔧 Explode image_urls",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ],
+      "notes": "REHOST-00 — fan-out the input array into one n8n item per image, preserving slide index for ordering in the final aggregation."
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.source_url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          },
+          "retry": {
+            "enabled": true,
+            "maxTries": 3,
+            "waitBetweenTries": 2000
+          }
+        }
+      },
+      "id": "http-get-image",
+      "name": "📥 HTTP GET — Download source image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        680,
+        300
+      ],
+      "notes": "REHOST-01 — download source image as binary, preserving exp/sig query params from the source URL. No custom headers (Ideogram/FAL URLs carry their own auth in the query string)."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Generate date-prefixed UUID blob name.\n// Detect extension from source URL ending, default to .jpg.\nconst { randomUUID } = require('crypto');\n\nconst now = new Date();\nconst y = now.getUTCFullYear();\nconst m = String(now.getUTCMonth() + 1).padStart(2, '0');\nconst d = String(now.getUTCDate()).padStart(2, '0');\n\n// Infer extension from URL path (strip query string first).\nconst sourceUrl = $json.source_url || '';\nconst pathOnly = sourceUrl.split('?')[0].toLowerCase();\nlet ext = 'jpg';\nlet contentType = 'image/jpeg';\nif (pathOnly.endsWith('.png')) {\n  ext = 'png';\n  contentType = 'image/png';\n} else if (pathOnly.endsWith('.webp')) {\n  ext = 'webp';\n  contentType = 'image/webp';\n}\n\nconst blobName = `${y}/${m}/${d}/${randomUUID()}.${ext}`;\n\nreturn {\n  json: {\n    ...$json,\n    blob_name: blobName,\n    content_type: contentType,\n  }\n};",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "build-blob-name",
+      "name": "🔧 Build blob name",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        300
+      ],
+      "notes": "REHOST-02 — generate YYYY/MM/DD/<uuid>.<ext> blob name. Content-Type defaults to image/jpeg, overridden to png/webp when detected from the source URL path."
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://{{ $env.AZURE_STORAGE_ACCOUNT }}.blob.core.windows.net/{{ $env.AZURE_CONTAINER }}/{{ $json.blob_name }}?{{ $env.AZURE_SAS_PARAMS }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-ms-blob-type",
+              "value": "BlockBlob"
+            },
+            {
+              "name": "x-ms-version",
+              "value": "2020-10-02"
+            },
+            {
+              "name": "Content-Type",
+              "value": "={{ $json.content_type }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {
+          "retry": {
+            "enabled": true,
+            "maxTries": 3,
+            "waitBetweenTries": 2000
+          },
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "http-put-blob",
+      "name": "📤 HTTP PUT — Upload to Azure Blob",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueErrorOutput",
+      "position": [
+        1120,
+        300
+      ],
+      "notes": "REHOST-03 — PUT to Azure Blob with SAS. BlockBlob header is REQUIRED (set above in headerParameters). Retry is safe because PUT to a blob is idempotent (unlike Meta media_publish). Env vars are read only via {{ $env.* }} expression in this URL field (allowed), never inside a Code node (forbidden by CLAUDE.md)."
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f1",
+              "name": "blob_url",
+              "value": "=https://{{ $env.AZURE_STORAGE_ACCOUNT }}.blob.core.windows.net/{{ $env.AZURE_CONTAINER }}/{{ $('🔧 Build blob name').item.json.blob_name }}",
+              "type": "string"
+            },
+            {
+              "id": "f2",
+              "name": "slide_index",
+              "value": "={{ $('🔧 Build blob name').item.json.slide_index }}",
+              "type": "number"
+            },
+            {
+              "id": "f3",
+              "name": "post_id",
+              "value": "={{ $('🔧 Build blob name').item.json.post_id }}",
+              "type": "string"
+            },
+            {
+              "id": "f4",
+              "name": "approval_number",
+              "value": "={{ $('🔧 Build blob name').item.json.approval_number }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "build-blob-url",
+      "name": "🔧 Build blob URL",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [
+        1340,
+        300
+      ],
+      "notes": "REHOST-04 — permanent public URL. Env vars read via {{ $env.* }} expression (allowed), NOT via $env inside a Code node (forbidden per CLAUDE.md). Uses a Set node so env references stay in expression fields only."
+    },
+    {
+      "parameters": {
+        "method": "HEAD",
+        "url": "={{ $json.blob_url }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "http-head-verify",
+      "name": "✅ HTTP HEAD — Verify public reachability",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1560,
+        300
+      ],
+      "notes": "REHOST-05 — catches 'AllowBlobPublicAccess disabled' or wrong container access level. Returns 200 if the blob is publicly reachable. 403 = Azure Portal setup was not completed. No retry: fail fast, because a 403 here is configuration, not transient."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Aggregate all per-item blob URLs into a single output item, sorted by slide_index.\nconst items = $input.all();\nconst postId = items[0]?.json?.post_id || null;\n\nconst blobUrls = items\n  .map(it => ({\n    index: it.json.slide_index,\n    url: it.json.blob_url,\n  }))\n  .filter(b => b.url)\n  .sort((a, b) => a.index - b.index);\n\nreturn [{\n  json: {\n    blob_urls: blobUrls,\n    post_id: postId,\n  }\n}];",
+        "mode": "runOnceForAllItems"
+      },
+      "id": "collect-blobs",
+      "name": "🗂️ Collect blob_urls",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1780,
+        300
+      ],
+      "notes": "REHOST-06 — aggregate per-slide results into a single output item with blob_urls array sorted by slide_index. This is the return value that the parent workflow (Plan 02) consumes."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.ycloud.com/v2/whatsapp/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $env.YCLOUD_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ from: $env.YCLOUD_WHATSAPP_NUMBER, to: $json.approval_number, type: \"text\", text: { body: \"❌ Error al re-alojar imagen para el post (slide \" + ($json.slide_index || '?') + \"). Post cancelado. Reintenta desde el Wizard.\" } }) }}",
+        "options": {}
+      },
+      "id": "notify-abort",
+      "name": "📱 Notify Abort WA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1340,
+        520
+      ],
+      "notes": "Abort notification — preserves slide_index in the WA message so Felix knows which image failed. Fires on the PUT error output (after 3 retries exhausted)."
+    },
+    {
+      "parameters": {
+        "errorMessage": "={{ \"Re-host failed for slide \" + ($json.slide_index || 'unknown') + \" after 3 retries. Post aborted.\" }}"
+      },
+      "id": "stop-error",
+      "name": "🛑 Stop And Error",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        1560,
+        520
+      ],
+      "notes": "Halts the sub-workflow execution with an error so the main workflow sees a failed execution and does NOT proceed to Meta publish."
+    }
+  ],
+  "connections": {
+    "▶️ Execute Sub-workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "🔧 Explode image_urls",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔧 Explode image_urls": {
+      "main": [
+        [
+          {
+            "node": "📥 HTTP GET — Download source image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📥 HTTP GET — Download source image": {
+      "main": [
+        [
+          {
+            "node": "🔧 Build blob name",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔧 Build blob name": {
+      "main": [
+        [
+          {
+            "node": "📤 HTTP PUT — Upload to Azure Blob",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📤 HTTP PUT — Upload to Azure Blob": {
+      "main": [
+        [
+          {
+            "node": "🔧 Build blob URL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "📱 Notify Abort WA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔧 Build blob URL": {
+      "main": [
+        [
+          {
+            "node": "✅ HTTP HEAD — Verify public reachability",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "✅ HTTP HEAD — Verify public reachability": {
+      "main": [
+        [
+          {
+            "node": "🗂️ Collect blob_urls",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📱 Notify Abort WA": {
+      "main": [
+        [
+          {
+            "node": "🛑 Stop And Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    "propulsar",
+    "content-engine",
+    "v3",
+    "rehost"
+  ]
+}
