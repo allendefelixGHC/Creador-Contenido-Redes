@@ -5,14 +5,15 @@
 See: .planning/PROJECT.md (updated 2026-04-10)
 
 **Core value:** Generate complete social media posts (single or carousel) in one wizard run, with AI-generated images and WhatsApp preview before publication
-**Current focus:** Planning v1.1 — Automatic Publishing to Instagram + Facebook
+**Current focus:** v1.1 — Automatic Publishing to Instagram + Facebook
 
 ## Current Position
 
-Milestone: v1.0 Carousel Support → SHIPPED 2026-04-10
-Next: v1.1 Automatic Publishing (planning)
-
-Status: Ready for `/gsd:new-milestone`
+Milestone: v1.1 Automatic Publishing
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-10 — Milestone v1.1 started
 
 ## Accumulated Context
 
@@ -32,5 +33,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-04-10
-Stopped at: v1.0 milestone archived, ready to plan v1.1 (Automatic Publishing)
+Stopped at: v1.1 Automatic Publishing milestone started, gathering requirements
 Resume file: None

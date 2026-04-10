@@ -18,6 +18,17 @@ Generate complete social media posts (single or carousel) in one wizard run, eac
 
 **Pending for v1.1:** Automatic publishing to Instagram/Facebook via Meta Graph API. Tokens are now available (META_PAGE_TOKEN, INSTAGRAM_ACCOUNT_ID, FACEBOOK_PAGE_ID configured in `.env` and Azure Container App environment variables on 2026-04-10).
 
+## Current Milestone: v1.1 Automatic Publishing
+
+**Goal:** Close the loop — publish approved carousels and single posts directly to Instagram and Facebook via Meta Graph API, with scheduling, re-hosting, retry logic, and WhatsApp confirmations.
+
+**Target features:**
+- Publish single-post + carousel to Instagram and Facebook via Meta Graph API
+- Re-host Ideogram images in Azure Blob Storage before sending to Meta (ephemeral URLs break Meta ingestion)
+- Scheduling via n8n Wait node — Wizard asks "publish now or at specific time (today/tomorrow, max 24h)"
+- Retry logic on Meta publish failures; on final failure → WhatsApp notify Felix + log error in Google Sheets
+- On success → WhatsApp message with published post URLs (IG + FB) + log in Sheets
+
 ## Requirements
 
 ### Validated
@@ -40,7 +51,17 @@ Generate complete social media posts (single or carousel) in one wizard run, eac
 
 ### Active
 
-(None — defined fresh for v1.1 via `/gsd:new-milestone`)
+<!-- Defined during v1.1 requirements phase. See REQUIREMENTS.md for full list with REQ-IDs. -->
+
+- [ ] Publish single-post to Instagram and Facebook via Meta Graph API
+- [ ] Publish carousel to Instagram (carousel container) and Facebook (attached_media)
+- [ ] Re-host Ideogram images in Azure Blob Storage before Meta calls
+- [ ] Wizard asks publish time (now or specific hour today/tomorrow)
+- [ ] n8n Wait node queues post until scheduled time
+- [ ] Retry logic on Meta publish failures with backoff
+- [ ] WhatsApp success notification with post URLs (IG + FB)
+- [ ] WhatsApp failure notification with error details
+- [ ] Google Sheets log updated with published URLs (not just generation success)
 
 ### Out of Scope
 
@@ -90,15 +111,5 @@ Generate complete social media posts (single or carousel) in one wizard run, eac
 | SplitInBatches removed from loops | n8n natively processes N items sequentially in HTTP Request nodes; SplitInBatches Done branch can't reference loop body | ⚠ Workaround — needed until n8n version upgrade |
 | Meta tokens generated from Susana's account, not Felix | Susana is direct admin of Propulsar page; Felix's Graph API calls returned empty `data` arrays | ✓ Good — tokens verified working 2026-04-10 |
 
-## Next Milestone Goals (v1.1)
-
-**Theme:** Automatic Publishing
-
-- Publish approved carousels directly to Instagram via Meta Graph API (carousel container endpoint)
-- Publish single-post to Instagram and Facebook
-- Re-host Ideogram images before publishing (ephemeral URLs don't work with Meta)
-- Log published post URLs to Google Sheets (not just generation success)
-- Handle publishing errors gracefully with retry logic
-
 ---
-*Last updated: 2026-04-10 after v1.0 Carousel Support milestone*
+*Last updated: 2026-04-10 — v1.1 Automatic Publishing milestone started*
