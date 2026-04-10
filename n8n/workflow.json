@@ -516,7 +516,7 @@
             "Angulo": "={{ $json.angle || '' }}",
             "Plataformas": "={{ Array.isArray($json.platforms) ? $json.platforms.join(', ') : '' }}",
             "Modelo_Imagen": "={{ $json.image_model }}",
-            "Imagen_URL": "={{ $json.final_image_url || '' }}",
+            "Imagen_URL": "={{ ($json.blob_urls && $json.blob_urls[0] && $json.blob_urls[0].url) || $json.final_image_url || '' }}",
             "Estado": "Publicado"
           }
         }
@@ -526,7 +526,7 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.4,
       "position": [
-        2840,
+        3720,
         380
       ],
       "credentials": {
@@ -630,6 +630,138 @@
         1280,
         540
       ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normalize both single-post and carousel briefs into the sub-workflow's expected input shape.\n// Single post: $json has final_image_url (string).\n// Carousel: $json has image_urls (array of strings) and num_images.\n//\n// Output shape for Execute Workflow:\n//   { image_urls: [{ index, url }], post_id, approval_number }\n\nconst data = $input.first().json;\nconst format = data.format || 'single';\n\nlet imageUrls = [];\nif (format === 'carousel' && Array.isArray(data.image_urls)) {\n  imageUrls = data.image_urls.map((url, i) => ({ index: i + 1, url }));\n} else if (data.final_image_url) {\n  imageUrls = [{ index: 1, url: data.final_image_url }];\n} else {\n  throw new Error('Prep Re-host Input: no image URL found on approved post (neither final_image_url nor image_urls)');\n}\n\n// post_id: derive from session/timestamp. Prefer an existing session_id if present (set by Recuperar sesion Supabase).\nconst postId = data.session_id || ('propulsar_' + Date.now());\n\nreturn [{\n  json: {\n    // Pass ALL upstream fields through so downstream nodes (Sheets Log, future Meta publish)\n    // still have access to topic, type, angle, instagram/facebook text, etc.\n    ...data,\n    // Plus the sub-workflow input fields:\n    image_urls: imageUrls,\n    post_id: postId,\n    approval_number: data.approval_number\n  }\n}];",
+        "mode": "runOnceForAllItems"
+      },
+      "id": "prep-rehost-input",
+      "name": "🔧 Prep Re-host Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3060,
+        380
+      ],
+      "notes": "Normalizes single-post (final_image_url) and carousel (image_urls) into the sub-workflow input shape { image_urls: [{index,url}], post_id, approval_number }. Passes all other fields through so downstream nodes retain topic/type/angle/text."
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "BIaG266Q6AZpv4Sq"
+        },
+        "workflowInputs": {
+          "mappingMode": "passthrough"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "execute-rehost-subflow",
+      "name": "🔁 Re-host Images",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        3280,
+        380
+      ],
+      "notes": "Calls the Re-host Images sub-workflow (n8n workflow ID BIaG266Q6AZpv4Sq). workflowInputs.mappingMode MUST be 'passthrough' because the sub-workflow trigger uses inputSource: passthrough — using 'defineBelow' with an empty value would send empty input and the sub-workflow's Explode node would throw. Output: { blob_urls, post_id }. NOTE: Execute Workflow replaces the item with the sub-workflow output, so downstream nodes no longer see topic/type/angle/etc. — that's why we need the '🔗 Merge Rehost Output' node next. If sub-workflow throws StopAndError, this node fails and the main execution aborts — Google Sheets Log and any Meta publish nodes will NOT run."
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "merge-blob-urls",
+              "name": "blob_urls",
+              "type": "array",
+              "value": "={{ $json.blob_urls }}"
+            },
+            {
+              "id": "merge-post-id",
+              "name": "post_id",
+              "type": "string",
+              "value": "={{ $json.post_id }}"
+            },
+            {
+              "id": "merge-topic",
+              "name": "topic",
+              "type": "string",
+              "value": "={{ $('🔧 Prep Re-host Input').item.json.topic }}"
+            },
+            {
+              "id": "merge-type",
+              "name": "type",
+              "type": "string",
+              "value": "={{ $('🔧 Prep Re-host Input').item.json.type }}"
+            },
+            {
+              "id": "merge-angle",
+              "name": "angle",
+              "type": "string",
+              "value": "={{ $('🔧 Prep Re-host Input').item.json.angle }}"
+            },
+            {
+              "id": "merge-platforms",
+              "name": "platforms",
+              "type": "array",
+              "value": "={{ $('🔧 Prep Re-host Input').item.json.platforms }}"
+            },
+            {
+              "id": "merge-image-model",
+              "name": "image_model",
+              "type": "string",
+              "value": "={{ $('🔧 Prep Re-host Input').item.json.image_model }}"
+            },
+            {
+              "id": "merge-instagram",
+              "name": "instagram",
+              "type": "object",
+              "value": "={{ $('🔧 Prep Re-host Input').item.json.instagram }}"
+            },
+            {
+              "id": "merge-facebook",
+              "name": "facebook",
+              "type": "object",
+              "value": "={{ $('🔧 Prep Re-host Input').item.json.facebook }}"
+            },
+            {
+              "id": "merge-final-image",
+              "name": "final_image_url",
+              "type": "string",
+              "value": "={{ $('🔧 Prep Re-host Input').item.json.final_image_url }}"
+            },
+            {
+              "id": "merge-format",
+              "name": "format",
+              "type": "string",
+              "value": "={{ $('🔧 Prep Re-host Input').item.json.format }}"
+            },
+            {
+              "id": "merge-approval-number",
+              "name": "approval_number",
+              "type": "string",
+              "value": "={{ $('🔧 Prep Re-host Input').item.json.approval_number }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "merge-rehost-output",
+      "name": "🔗 Merge Rehost Output",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3500,
+        380
+      ],
+      "notes": "Re-attaches original session metadata (from 🔧 Prep Re-host Input) to the sub-workflow output (blob_urls, post_id). Without this, Execute Workflow replaces the item with only { blob_urls, post_id }, and Google Sheets Log would write blank columns. Uses a Set node (no jsCode) to avoid any env concern. If the Wizard brief ever adds new session fields, extend this node's assignments array accordingly."
     }
   ],
   "connections": {
@@ -885,6 +1017,39 @@
       ]
     },
     "🔍 Recuperar sesión Supabase": {
+      "main": [
+        [
+          {
+            "node": "🔧 Prep Re-host Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔧 Prep Re-host Input": {
+      "main": [
+        [
+          {
+            "node": "🔁 Re-host Images",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔁 Re-host Images": {
+      "main": [
+        [
+          {
+            "node": "🔗 Merge Rehost Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔗 Merge Rehost Output": {
       "main": [
         [
           {
