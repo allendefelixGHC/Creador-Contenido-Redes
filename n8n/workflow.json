@@ -13,9 +13,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        200,
-        300
-      ]
+        208,
+        304
+      ],
+      "webhookId": "ac76ad2e-ccd7-4a27-8ff8-7f561de0629b"
     },
     {
       "parameters": {
@@ -28,27 +29,31 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        420,
+        432,
         160
       ]
     },
     {
       "parameters": {
-        "model": "gpt-4o",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
         "messages": {
           "values": [
             {
-              "role": "system",
-              "content": "Eres el director creativo de Propulsar.ai, agencia de automatizaciones IA para PYMEs.\n\nTu tarea es generar prompts de imagen para cada slide de un carrusel de Instagram/Facebook, más los captions para ambas plataformas.\n\nPRIMERO elige la estructura de carrusel más adecuada para el tema y tipo:\n- narrativo: cuenta una historia con arco (inicio → desarrollo → resolución)\n- listicle: lista de tips, herramientas o beneficios numerados\n- paso-a-paso: instrucciones secuenciales para lograr algo\n- antes-después: contraste entre una situación actual y la transformación\n- pregunta-respuesta: hook con pregunta, slides respondiendo, CTA final\n\nIDENTIDAD VISUAL PROPULSAR (aplicar en CADA prompt sin excepción):\n- Fondo oscuro profundo: #1a1a2e\n- Gradiente principal: púrpura #6B46C1 → magenta #EC4899\n- Tipografía bold en español, legible, prominente\n- Formato cuadrado 1:1\n- Estética profesional tech/AI, alto contraste\n\nREGLAS CRÍTICAS:\n1. Cada campo `prompt` debe ser COMPLETAMENTE autocontenido con TODAS las restricciones de estilo. Prohibido usar \"same as above\", \"idem\" o referencias a otros slides.\n2. El array `slides` debe tener EXACTAMENTE el número de slides solicitados.\n3. Los `prompt` van en inglés. Los `texto_overlay` van en español.\n4. Responde con JSON puro sin markdown, sin bloques ```json.\n\nFORMATO DE RESPUESTA:\n{\n  \"estructura\": \"narrativo|listicle|paso-a-paso|antes-después|pregunta-respuesta\",\n  \"instagram_caption\": \"caption completo con hook <125 chars, 150-300 palabras, párrafos cortos, 8-12 hashtags, máx 3 emojis al inicio de línea, CTA claro\",\n  \"facebook_caption\": \"caption 100-200 palabras, 3-5 hashtags, pregunta para comentarios al final, CTA\",\n  \"slides\": [\n    {\n      \"slide_num\": 1,\n      \"texto_overlay\": \"texto visible en la imagen en español\",\n      \"prompt\": \"full English image generation prompt with all style constraints: dark background #1a1a2e, purple #6B46C1 to magenta #EC4899 gradient elements, bold readable Spanish typography '[texto_overlay]', square 1:1, professional AI/tech aesthetic, ultra-detailed\"\n    }\n  ]\n}\n\nVoz de marca: profesional pero accesible, directo, español latinoamericano (tuteo). Sin buzzwords: prohibido revolutionario, disruptivo, sinergia, delve."
+              "content": "Eres el director creativo de Propulsar.ai, agencia de automatizaciones IA para PYMEs.\n\nTu tarea es generar prompts de imagen para cada slide de un carrusel de Instagram/Facebook, más los captions para ambas plataformas.\n\nPRIMERO elige la estructura de carrusel más adecuada para el tema y tipo:\n- narrativo: cuenta una historia con arco (inicio → desarrollo → resolución)\n- listicle: lista de tips, herramientas o beneficios numerados\n- paso-a-paso: instrucciones secuenciales para lograr algo\n- antes-después: contraste entre una situación actual y la transformación\n- pregunta-respuesta: hook con pregunta, slides respondiendo, CTA final\n\nIDENTIDAD VISUAL PROPULSAR (aplicar en CADA prompt sin excepción):\n- Fondo oscuro profundo: #1a1a2e\n- Gradiente principal: púrpura #6B46C1 → magenta #EC4899\n- Tipografía bold sans-serif en español, legible, prominente\n- Formato cuadrado 1:1\n- Estética profesional tech/AI, alto contraste, ultra-detailed, 4K quality\n\nREGLAS DE TEXTO EN IMAGEN (CRÍTICO):\n1. El texto_overlay es el texto EXACTO que aparecerá visible en la imagen. Máximo 6-8 palabras. Si necesitás más, dividí en más slides.\n2. En el campo prompt, el texto en español va PRIMERO entre comillas dobles, usando el patrón: Text says: \"[texto_overlay exacto]\". Después describí el visual.\n3. NUNCA incluir texto en inglés visible en la imagen. Todo texto visible debe ser en español castellano.\n4. Prohibido usar texto lorem ipsum, texto decorativo ilegible, o texto de relleno.\n\nREGLAS GENERALES:\n1. Cada campo prompt debe ser COMPLETAMENTE autocontenido con TODAS las restricciones de estilo. Prohibido usar \"same as above\", \"idem\" o referencias a otros slides.\n2. El array slides debe tener EXACTAMENTE el número de slides solicitados.\n3. Los prompt van en inglés (excepto el texto visible que va en español entre comillas).\n4. Los texto_overlay van en español.\n5. Respondé con JSON puro sin markdown, sin bloques ```json.\n\nFORMATO DE RESPUESTA:\n{\n  \"estructura\": \"narrativo|listicle|paso-a-paso|antes-después|pregunta-respuesta\",\n  \"instagram_caption\": \"caption completo con hook <125 chars, 150-300 palabras, párrafos cortos, 8-12 hashtags, máx 3 emojis al inicio de línea, CTA claro\",\n  \"facebook_caption\": \"caption 100-200 palabras, 3-5 hashtags, pregunta para comentarios al final, CTA\",\n  \"slides\": [\n    {\n      \"slide_num\": 1,\n      \"texto_overlay\": \"máx 6-8 palabras en español\",\n      \"prompt\": \"Text says: \\\"[texto_overlay exacto aquí]\\\". Dark background #1a1a2e, bold white sans-serif typography centered, purple #6B46C1 to magenta #EC4899 gradient glow, professional AI/tech aesthetic, ultra-detailed, crisp text, square 1:1, no other text visible. [descripción visual específica del slide].\"\n    }\n  ]\n}\n\nEJEMPLO DE UN BUEN PROMPT:\nText says: \"Automatiza tu WhatsApp\". Dark background #1a1a2e, bold white sans-serif typography centered, purple #6B46C1 to magenta #EC4899 gradient glow behind text, professional AI/tech aesthetic, minimalist icons of chat bubbles and automation gears, ultra-detailed, crisp text, square 1:1, no other text visible.",
+              "role": "system"
             },
             {
-              "role": "user",
               "content": "=Tema: \"{{ $json.body.topic }}\"\nTipo: {{ $json.body.type }}\n{% if $json.body.angle %}Ángulo: {{ $json.body.angle }}\n{% endif %}Slides requeridos: {{ $json.body.num_images }}\n\nElige la estructura del carrusel apropiada y genera EXACTAMENTE {{ $json.body.num_images }} prompts de imagen, más los captions para Instagram y Facebook."
             }
           ]
         },
         "options": {
-          "temperature": 0.7
+          "temperature": 0.5
         }
       },
       "id": "openai-carousel",
@@ -57,41 +62,39 @@
       "typeVersion": 1.4,
       "position": [
         640,
-        520
+        528
       ],
       "credentials": {
         "openAiApi": {
-          "id": "openai-credentials",
-          "name": "OpenAI"
+          "id": "oSMopb75vo4NhdlT",
+          "name": "OpenAI account 29"
         }
       }
     },
     {
       "parameters": {
-        "jsCode": "const raw = $input.first().json.message.content;\nconst b = $('🎯 Webhook Trigger').first().json.body;\n\nlet parsed;\ntry {\n  parsed = JSON.parse(raw.replace(/```json\\n?/g,'').replace(/```\\n?/g,'').trim());\n} catch(e) {\n  throw new Error('JSON inválido de GPT-4o (carrusel): ' + raw.substring(0,200));\n}\n\nconst slides = parsed.slides || [];\n\nif (slides.length !== b.num_images) {\n  console.warn(`⚠ GPT-4o devolvió ${slides.length} slides, se esperaban ${b.num_images}`);\n}\n\nreturn [{\n  json: {\n    instagram:       { caption: parsed.instagram_caption || '' },\n    facebook:        { caption: parsed.facebook_caption || '' },\n    topic:           b.topic,\n    type:            b.type,\n    angle:           b.angle || null,\n    platforms:       b.platforms,\n    image_model:     'ideogram',\n    fal_model_id:    null,\n    has_own_image:   false,\n    image_url:       null,\n    has_text_in_image: true,\n    approval_number: b.approval_number,\n    timestamp:       b.timestamp,\n    format:          'carousel',\n    num_images:      b.num_images,\n    estructura:      parsed.estructura || 'listicle',\n    image_prompts:   slides.map(s => ({\n      slide_num:     s.slide_num,\n      texto_overlay: s.texto_overlay,\n      prompt:        s.prompt,\n    })),\n  }\n}];",
-        "mode": "runOnceForAllItems"
+        "jsCode": "const raw = $input.first().json.message.content;\nconst b = $('🎯 Webhook Trigger').first().json.body;\n\nlet parsed;\ntry {\n  parsed = JSON.parse(raw.replace(/```json\\n?/g,'').replace(/```\\n?/g,'').trim());\n} catch(e) {\n  throw new Error('JSON inválido de GPT-4o (carrusel): ' + raw.substring(0,200));\n}\n\nconst slides = parsed.slides || [];\n\nif (slides.length !== b.num_images) {\n  console.warn(`⚠ GPT-4o devolvió ${slides.length} slides, se esperaban ${b.num_images}`);\n}\n\nreturn [{\n  json: {\n    instagram:       { caption: parsed.instagram_caption || '' },\n    facebook:        { caption: parsed.facebook_caption || '' },\n    topic:           b.topic,\n    type:            b.type,\n    angle:           b.angle || null,\n    platforms:       b.platforms,\n    image_model:     'ideogram',\n    fal_model_id:    null,\n    has_own_image:   false,\n    image_url:       null,\n    has_text_in_image: true,\n    approval_number: b.approval_number,\n    timestamp:       b.timestamp,\n    format:          'carousel',\n    num_images:      b.num_images,\n    estructura:      parsed.estructura || 'listicle',\n    image_prompts:   slides.map(s => ({\n      slide_num:     s.slide_num,\n      texto_overlay: s.texto_overlay,\n      prompt:        s.prompt,\n    })),\n  }\n}];"
       },
       "id": "parse-carousel",
       "name": "🔧 Parsear prompts carrusel",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        860,
-        520
+        864,
+        528
       ]
     },
     {
       "parameters": {
-        "jsCode": "const data = $input.first().json;\nconst prompts = data.image_prompts;\n\nreturn prompts.map(slide => ({\n  json: {\n    slide_num:       slide.slide_num,\n    texto_overlay:   slide.texto_overlay,\n    prompt:          slide.prompt,\n    approval_number: data.approval_number,\n    num_images:      data.num_images,\n    topic:           data.topic,\n    type:            data.type,\n  }\n}));",
-        "mode": "runOnceForAllItems"
+        "jsCode": "const data = $input.first().json;\nconst prompts = data.image_prompts;\n\nreturn prompts.map(slide => ({\n  json: {\n    slide_num:       slide.slide_num,\n    texto_overlay:   slide.texto_overlay,\n    prompt:          slide.prompt,\n    approval_number: data.approval_number,\n    num_images:      data.num_images,\n    topic:           data.topic,\n    type:            data.type,\n  }\n}));"
       },
       "id": "explode-carousel-slides",
       "name": "🎠 Explode Slides",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1080,
-        520
+        1088,
+        528
       ]
     },
     {
@@ -113,7 +116,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"image_request\": {\n    \"prompt\": \"{{ $json.prompt }}\",\n    \"aspect_ratio\": \"ASPECT_1_1\",\n    \"model\": \"V_2\",\n    \"magic_prompt_option\": \"AUTO\",\n    \"style_type\": \"DESIGN\"\n  }\n}",
+        "jsonBody": "={\n  \"image_request\": {\n    \"prompt\": \"{{ $json.prompt }}\",\n    \"aspect_ratio\": \"ASPECT_1_1\",\n    \"model\": \"V_2_TURBO\",\n    \"magic_prompt_option\": \"OFF\",\n    \"style_type\": \"DESIGN\"\n  }\n}",
         "options": {}
       },
       "id": "ideogram-slide",
@@ -122,27 +125,31 @@
       "typeVersion": 4.2,
       "position": [
         1520,
-        520
+        528
       ],
       "notes": "Ideogram v2 per carousel slide — called once per slide via SplitInBatches loop"
     },
     {
       "parameters": {
-        "model": "gpt-4o",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
         "messages": {
           "values": [
             {
-              "role": "system",
-              "content": "Eres el redactor de contenido de Propulsar.ai, agencia de automatizaciones IA para PYMEs.\n\nVoz: profesional pero accesible, directo, español latinoamericano (tuteo).\nSin buzzwords. Prohibido: revolutionario, disruptivo, sinergia, delve, unleash.\n\nDevolvé SOLO JSON válido, sin markdown:\n{\n  \"instagram\": {\n    \"caption\": \"post completo con hashtags al final\",\n    \"image_prompt\": \"prompt en inglés para generación de imagen, dark background purple-magenta gradients, professional social media\"\n  },\n  \"facebook\": {\n    \"caption\": \"post completo (más corto, 3-5 hashtags)\"\n  }\n}"
+              "content": "Eres el redactor de contenido de Propulsar.ai, agencia de automatizaciones IA para PYMEs.\n\nVoz: profesional pero accesible, directo, español latinoamericano (tuteo).\nSin buzzwords. Prohibido: revolutionario, disruptivo, sinergia, delve, unleash.\n\nDevolvé SOLO JSON válido, sin markdown:\n{\n  \"instagram\": {\n    \"caption\": \"post completo con hashtags al final\",\n    \"image_prompt\": \"prompt en inglés para generación de imagen, dark background purple-magenta gradients, professional social media\"\n  },\n  \"facebook\": {\n    \"caption\": \"post completo (más corto, 3-5 hashtags)\"\n  }\n}",
+              "role": "system"
             },
             {
-              "role": "user",
               "content": "=Genera un post {{ $json.body.type }} sobre: \"{{ $json.body.topic }}\"\n\n{% if $json.body.angle %}Ángulo: {{ $json.body.angle }}{% endif %}\n{% if $json.body.has_text_in_image %}IMPORTANTE: El image_prompt debe incluir texto visible específico relevante al tema, ya que se usará Ideogram (excelente para texto en imagen).{% endif %}\n\nPlataformas: {{ $json.body.platforms.join(', ') }}\n\nInstagram: hook <125 chars, 150-300 palabras, párrafos cortos, 8-12 hashtags, máx 3 emojis, CTA.\nFacebook: 100-200 palabras, 3-5 hashtags, pregunta final para comentarios, CTA."
             }
           ]
         },
         "options": {
-          "temperature": 0.75
+          "temperature": 0.5
         }
       },
       "id": "openai-text",
@@ -150,13 +157,13 @@
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 1.4,
       "position": [
-        420,
-        360
+        432,
+        368
       ],
       "credentials": {
         "openAiApi": {
-          "id": "openai-credentials",
-          "name": "OpenAI"
+          "id": "oSMopb75vo4NhdlT",
+          "name": "OpenAI account 29"
         }
       }
     },
@@ -170,7 +177,7 @@
       "typeVersion": 2,
       "position": [
         640,
-        360
+        368
       ]
     },
     {
@@ -179,8 +186,7 @@
           "string": [
             {
               "value1": "={{ String($json.has_own_image) }}",
-              "value2": "true",
-              "operation": "equal"
+              "value2": "true"
             }
           ]
         }
@@ -190,8 +196,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
       "position": [
-        860,
-        360
+        864,
+        368
       ]
     },
     {
@@ -203,8 +209,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1080,
-        200
+        1088,
+        208
       ]
     },
     {
@@ -234,8 +240,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1300,
-        300
+        1312,
+        304
       ],
       "notes": "FAL model: fal-ai/flux-pro/v1.1\nCosto: ~$0.03/img\nFortaleza: fotorrealismo premium"
     },
@@ -258,7 +264,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"image_request\": {\n    \"prompt\": \"{{ $json.image_prompt }} — professional design, dark background #1a1a2e, purple and magenta gradient elements, bold readable typography, social media post\",\n    \"aspect_ratio\": \"ASPECT_1_1\",\n    \"model\": \"V_2\",\n    \"magic_prompt_option\": \"AUTO\",\n    \"style_type\": \"DESIGN\"\n  }\n}",
+        "jsonBody": "={\n  \"image_request\": {\n    \"prompt\": \"{{ $json.image_prompt }} — professional design, dark background #1a1a2e, purple and magenta gradient elements, bold readable typography, social media post\",\n    \"aspect_ratio\": \"ASPECT_1_1\",\n    \"model\": \"V_2_TURBO\",\n    \"magic_prompt_option\": \"OFF\",\n    \"style_type\": \"DESIGN\"\n  }\n}",
         "options": {}
       },
       "id": "ideogram-generate",
@@ -266,8 +272,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1300,
-        440
+        1312,
+        448
       ],
       "notes": "Costo: ~$0.06/img\nFortaleza: texto legible en imagen (90-95% precisión)\nRequiere IDEOGRAM_API_KEY"
     },
@@ -298,8 +304,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1300,
-        580
+        1312,
+        592
       ],
       "notes": "FAL model: fal-ai/nano-banana (Gemini 3 Pro Image)\nCosto: ~$0.15/img\nFortaleza: razonamiento visual, 4K, alto impacto\nMisma FAL_API_KEY que Flux"
     },
@@ -313,7 +319,7 @@
       "typeVersion": 2,
       "position": [
         1520,
-        440
+        448
       ]
     },
     {
@@ -325,8 +331,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1740,
-        440
+        1744,
+        448
       ]
     },
     {
@@ -356,8 +362,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1960,
-        440
+        1968,
+        448
       ]
     },
     {
@@ -372,9 +378,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        2180,
-        440
+        2192,
+        448
       ],
+      "webhookId": "10d7c19d-a915-452a-8f16-3b568c14de39",
       "notes": "Configurar esta URL en YCloud → Webhooks → Incoming Messages"
     },
     {
@@ -389,7 +396,7 @@
       "typeVersion": 1,
       "position": [
         2400,
-        280
+        288
       ]
     },
     {
@@ -398,8 +405,7 @@
           "string": [
             {
               "value1": "={{ $json.body?.message?.text?.body?.trim().toUpperCase() }}",
-              "value2": "SI",
-              "operation": "equal"
+              "value2": "SI"
             }
           ]
         }
@@ -410,7 +416,7 @@
       "typeVersion": 1,
       "position": [
         2400,
-        460
+        464
       ]
     },
     {
@@ -422,213 +428,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2620,
-        380
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "console.log('Rechazado:', $json.body?.message?.from, new Date().toISOString());\nreturn [{ json: { status:'rejected', ts: new Date().toISOString() } }];"
-      },
-      "id": "log-rejected",
-      "name": "❌ Loguear rechazo",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        2620,
-        560
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "const carousel = $('🔧 Parsear prompts carrusel').first().json;\nconst loopItems = $input.all();\n\n// IMG-02: Normalize and validate all image URLs\nconst imageUrls = loopItems.map(item => {\n  const url = item.json.data?.[0]?.url || null;\n  if (url && typeof url === 'string' && url.startsWith('https://')) {\n    return url; // Keep full URL with auth params (exp, sig)\n  }\n  return null;\n}).filter(Boolean);\n\nif (imageUrls.length !== carousel.num_images) {\n  throw new Error('Se generaron ' + imageUrls.length + ' imagenes, se esperaban ' + carousel.num_images + '. Faltan slides.');\n}\n\nreturn [{\n  json: {\n    instagram:       carousel.instagram,\n    facebook:        carousel.facebook,\n    topic:           carousel.topic,\n    type:            carousel.type,\n    angle:           carousel.angle || null,\n    platforms:       carousel.platforms,\n    image_model:     'ideogram',\n    approval_number: carousel.approval_number,\n    timestamp:       carousel.timestamp,\n    format:          'carousel',\n    num_images:      carousel.num_images,\n    image_urls:      imageUrls,\n    final_image_url: imageUrls[0] || null,\n  }\n}];",
-        "mode": "runOnceForAllItems"
-      },
-      "id": "collect-carousel-urls",
-      "name": "🗂️ Collect Image URLs",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1740,
-        520
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "const data = $input.first().json;\nconst urls = data.image_urls;\n\nreturn urls.map((url, idx) => ({\n  json: {\n    current_image_url: url,\n    slide_index:       idx + 1,\n    num_images:        data.num_images,\n    approval_number:   data.approval_number,\n    _carousel_data:    data,\n  }\n}));",
-        "mode": "runOnceForAllItems"
-      },
-      "id": "split-wa-urls",
-      "name": "📨 Split URLs WA",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1960,
-        520
-      ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.ycloud.com/v2/whatsapp/messages",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "X-API-Key",
-              "value": "={{ $env.YCLOUD_API_KEY }}"
-            },
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ \"from\": $env.YCLOUD_WHATSAPP_NUMBER, \"to\": $json.approval_number, \"type\": \"image\", \"image\": { \"link\": $json.current_image_url, \"caption\": \"Slide \" + $json.slide_index + \" de \" + $json.num_images } }) }}",
-        "options": {}
-      },
-      "id": "send-wa-image",
-      "name": "📤 Enviar imagen WA",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        2400,
-        620
-      ],
-      "notes": "YCloud sendDirectly — sends one carousel image per loop iteration"
-    },
-    {
-      "parameters": {
-        "documentId": {
-          "value": "={{ $env.GOOGLE_SHEETS_ID }}"
-        },
-        "sheetName": {
-          "value": "Log"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "Fecha": "={{ new Date().toISOString() }}",
-            "Tema": "={{ $json.topic }}",
-            "Tipo": "={{ $json.type }}",
-            "Angulo": "={{ $json.angle || '' }}",
-            "Plataformas": "={{ Array.isArray($json.platforms) ? $json.platforms.join(', ') : '' }}",
-            "Modelo_Imagen": "={{ $json.image_model }}",
-            "Imagen_URL": "={{ ($json.blob_urls && $json.blob_urls[0] && $json.blob_urls[0].url) || $json.final_image_url || '' }}",
-            "Estado": "Publicado"
-          }
-        }
-      },
-      "id": "log-sheets",
-      "name": "📊 Google Sheets Log",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.4,
-      "position": [
-        3720,
-        380
-      ],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "google-sheets-credentials",
-          "name": "Google Sheets"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "string": [
-            {
-              "value1": "={{ $json.body.format }}",
-              "value2": "carousel",
-              "operation": "equal"
-            }
-          ]
-        }
-      },
-      "id": "carousel-check",
-      "name": "🔀 ¿Carrusel?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 1,
-      "position": [
-        420,
-        520
-      ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.ycloud.com/v2/whatsapp/messages",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "X-API-Key",
-              "value": "={{ $env.YCLOUD_API_KEY }}"
-            },
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ \"from\": $env.YCLOUD_WHATSAPP_NUMBER, \"to\": $json.approval_number, \"type\": \"image\", \"image\": { \"link\": $json.final_image_url, \"caption\": \"Preview — \" + $json.topic } }) }}",
-        "options": {}
-      },
-      "id": "send-single-image",
-      "name": "📤 Enviar preview imagen",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        1200,
-        460
-      ],
-      "notes": "Single-post: sends image preview before text message"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "string": [
-            {
-              "value1": "={{ $json.image_model }}",
-              "value2": "ideogram",
-              "operation": "equal"
-            }
-          ]
-        }
-      },
-      "id": "router-if-ideogram",
-      "name": "🎨 ¿Ideogram?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 1,
-      "position": [
-        1080,
-        440
-      ]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "string": [
-            {
-              "value1": "={{ $json.image_model }}",
-              "value2": "nanoBanana",
-              "operation": "equal"
-            }
-          ]
-        }
-      },
-      "id": "router-if-nano",
-      "name": "🎨 ¿NanoBanana?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 1,
-      "position": [
-        1280,
-        540
+        2624,
+        384
       ]
     },
     {
@@ -762,6 +563,206 @@
         380
       ],
       "notes": "Re-attaches original session metadata (from 🔧 Prep Re-host Input) to the sub-workflow output (blob_urls, post_id). Without this, Execute Workflow replaces the item with only { blob_urls, post_id }, and Google Sheets Log would write blank columns. Uses a Set node (no jsCode) to avoid any env concern. If the Wizard brief ever adds new session fields, extend this node's assignments array accordingly."
+    },
+    {
+      "parameters": {
+        "jsCode": "console.log('Rechazado:', $json.body?.message?.from, new Date().toISOString());\nreturn [{ json: { status:'rejected', ts: new Date().toISOString() } }];"
+      },
+      "id": "log-rejected",
+      "name": "❌ Loguear rechazo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2624,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const carousel = $('🔧 Parsear prompts carrusel').first().json;\nconst loopItems = $input.all();\n\n// IMG-02: Normalize and validate all image URLs\nconst imageUrls = loopItems.map(item => {\n  const url = item.json.data?.[0]?.url || null;\n  if (url && typeof url === 'string' && url.startsWith('https://')) {\n    return url; // Keep full URL with auth params (exp, sig)\n  }\n  return null;\n}).filter(Boolean);\n\nif (imageUrls.length !== carousel.num_images) {\n  throw new Error('Se generaron ' + imageUrls.length + ' imagenes, se esperaban ' + carousel.num_images + '. Faltan slides.');\n}\n\nreturn [{\n  json: {\n    instagram:       carousel.instagram,\n    facebook:        carousel.facebook,\n    topic:           carousel.topic,\n    type:            carousel.type,\n    angle:           carousel.angle || null,\n    platforms:       carousel.platforms,\n    image_model:     'ideogram',\n    approval_number: carousel.approval_number,\n    timestamp:       carousel.timestamp,\n    format:          'carousel',\n    num_images:      carousel.num_images,\n    image_urls:      imageUrls,\n    final_image_url: imageUrls[0] || null,\n  }\n}];"
+      },
+      "id": "collect-carousel-urls",
+      "name": "🗂️ Collect Image URLs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1744,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst urls = data.image_urls;\n\nreturn urls.map((url, idx) => ({\n  json: {\n    current_image_url: url,\n    slide_index:       idx + 1,\n    num_images:        data.num_images,\n    approval_number:   data.approval_number,\n    _carousel_data:    data,\n  }\n}));"
+      },
+      "id": "split-wa-urls",
+      "name": "📨 Split URLs WA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1968,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.ycloud.com/v2/whatsapp/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $env.YCLOUD_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ \"from\": $env.YCLOUD_WHATSAPP_NUMBER, \"to\": $json.approval_number, \"type\": \"image\", \"image\": { \"link\": $json.current_image_url, \"caption\": \"Slide \" + $json.slide_index + \" de \" + $json.num_images } }) }}",
+        "options": {}
+      },
+      "id": "send-wa-image",
+      "name": "📤 Enviar imagen WA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2400,
+        624
+      ],
+      "notes": "YCloud sendDirectly — sends one carousel image per loop iteration"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "value": "={{ $env.GOOGLE_SHEETS_ID }}"
+        },
+        "sheetName": {
+          "value": "Log"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Fecha": "={{ new Date().toISOString() }}",
+            "Tema": "={{ $json.topic }}",
+            "Tipo": "={{ $json.type }}",
+            "Angulo": "={{ $json.angle || '' }}",
+            "Plataformas": "={{ Array.isArray($json.platforms) ? $json.platforms.join(', ') : '' }}",
+            "Modelo_Imagen": "={{ $json.image_model }}",
+            "Imagen_URL": "={{ ($json.blob_urls && $json.blob_urls[0] && $json.blob_urls[0].url) || $json.final_image_url || '' }}",
+            "Estado": "Publicado"
+          }
+        }
+      },
+      "id": "log-sheets",
+      "name": "📊 Google Sheets Log",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        2848,
+        384
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets-credentials",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.body.format }}",
+              "value2": "carousel"
+            }
+          ]
+        }
+      },
+      "id": "carousel-check",
+      "name": "🔀 ¿Carrusel?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        432,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.ycloud.com/v2/whatsapp/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $env.YCLOUD_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ \"from\": $env.YCLOUD_WHATSAPP_NUMBER, \"to\": $json.approval_number, \"type\": \"image\", \"image\": { \"link\": $json.final_image_url, \"caption\": \"Preview — \" + $json.topic } }) }}",
+        "options": {}
+      },
+      "id": "send-single-image",
+      "name": "📤 Enviar preview imagen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        464
+      ],
+      "notes": "Single-post: sends image preview before text message"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.image_model }}",
+              "value2": "ideogram"
+            }
+          ]
+        }
+      },
+      "id": "router-if-ideogram",
+      "name": "🎨 ¿Ideogram?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1088,
+        448
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.image_model }}",
+              "value2": "nanoBanana"
+            }
+          ]
+        }
+      },
+      "id": "router-if-nano",
+      "name": "🎨 ¿NanoBanana?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        544
+      ]
     }
   ],
   "connections": {
@@ -1027,39 +1028,6 @@
         ]
       ]
     },
-    "🔧 Prep Re-host Input": {
-      "main": [
-        [
-          {
-            "node": "🔁 Re-host Images",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "🔁 Re-host Images": {
-      "main": [
-        [
-          {
-            "node": "🔗 Merge Rehost Output",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "🔗 Merge Rehost Output": {
-      "main": [
-        [
-          {
-            "node": "📊 Google Sheets Log",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "📤 Enviar preview imagen": {
       "main": [
         [
@@ -1106,37 +1074,46 @@
           }
         ]
       ]
+    },
+    "🔧 Prep Re-host Input": {
+      "main": [
+        [
+          {
+            "node": "🔁 Re-host Images",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔁 Re-host Images": {
+      "main": [
+        [
+          {
+            "node": "🔗 Merge Rehost Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔗 Merge Rehost Output": {
+      "main": [
+        [
+          {
+            "node": "📊 Google Sheets Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
     "executionOrder": "v1",
-    "saveManualExecutions": true
-  },
-  "tags": [
-    "propulsar",
-    "content-engine",
-    "v3"
-  ],
-  "_meta": {
-    "version": "3.1",
-    "image_models": {
-      "flux": {
-        "fal_id": "fal-ai/flux-pro/v1.1",
-        "cost": "$0.03/img",
-        "key": "FAL_API_KEY"
-      },
-      "ideogram": {
-        "api": "api.ideogram.ai",
-        "cost": "$0.06/img",
-        "key": "IDEOGRAM_API_KEY"
-      },
-      "nanoBanana": {
-        "fal_id": "fal-ai/nano-banana",
-        "cost": "$0.15/img",
-        "key": "FAL_API_KEY"
-      }
-    },
-    "note": "Midjourney NO incluido — no tiene API oficial. Riesgo de ban en servicios de terceros. Ver README.",
-    "carousel_branch": "Added in v3.1 — IF node routes carousel briefs to dedicated GPT-4o node for per-slide prompt generation"
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "binaryMode": "separate"
   }
 }

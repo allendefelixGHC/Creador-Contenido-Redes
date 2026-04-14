@@ -67,3 +67,19 @@ paradigma, ecosistema (en contexto de negocio genérico), escalable (cuando no a
 - "¿Querés ver cómo funciona esto para tu rubro? Mandanos un mensaje."
 - "Guardá este post si tenés un negocio con atención al cliente."
 - "¿Cuánto tiempo perdés haciendo esto manualmente cada semana?"
+
+## Reglas de texto en imagen (carruseles)
+
+### Texto overlay
+- Máximo 6-8 palabras por slide
+- Siempre en español castellano — nunca texto en inglés visible
+- Fuente: bold sans-serif, blanco sobre fondo oscuro
+- Colocación: centrado, prominente, legible a tamaño móvil
+- Prohibido: texto decorativo ilegible, lorem ipsum, texto de relleno
+
+### Prompt de imagen (para Ideogram)
+- El texto en español va PRIMERO en el prompt, entre comillas dobles
+- Patrón: `Text says: "[texto exacto]". [descripción visual]`
+- Incluir siempre: dark background #1a1a2e, purple-magenta gradient, crisp text, ultra-detailed
+- `magic_prompt_option: OFF` — no dejar que Ideogram reescriba el prompt
+- Modelo: V_2_TURBO (mejor renderizado de texto que V_2)
