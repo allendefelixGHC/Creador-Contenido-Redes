@@ -434,7 +434,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Normalize both single-post and carousel briefs into the sub-workflow's expected input shape.\n// Single post: $json has final_image_url (string).\n// Carousel: $json has image_urls (array of strings) and num_images.\n//\n// Output shape for Execute Workflow:\n//   { image_urls: [{ index, url }], post_id, approval_number }\n\nconst data = $input.first().json;\nconst format = data.format || 'single';\n\nlet imageUrls = [];\nif (format === 'carousel' && Array.isArray(data.image_urls)) {\n  imageUrls = data.image_urls.map((url, i) => ({ index: i + 1, url }));\n} else if (data.final_image_url) {\n  imageUrls = [{ index: 1, url: data.final_image_url }];\n} else {\n  throw new Error('Prep Re-host Input: no image URL found on approved post (neither final_image_url nor image_urls)');\n}\n\n// post_id: derive from session/timestamp. Prefer an existing session_id if present (set by Recuperar sesion Supabase).\nconst postId = data.session_id || ('propulsar_' + Date.now());\n\nreturn [{\n  json: {\n    // Pass ALL upstream fields through so downstream nodes (Sheets Log, future Meta publish)\n    // still have access to topic, type, angle, instagram/facebook text, etc.\n    ...data,\n    // Plus the sub-workflow input fields:\n    image_urls: imageUrls,\n    post_id: postId,\n    approval_number: data.approval_number\n  }\n}];",
+        "jsCode": "// Normalize both single-post and carousel briefs into the sub-workflow's expected input shape.\n// Single post: $json has final_image_url (string).\n// Carousel: $json has image_urls (array of strings) and num_images.\n//\n// Output shape for Execute Workflow:\n//   { image_urls: [{ index, url }], post_id, approval_number }\n\nconst data = $input.first().json;\nconst format = data.format || 'single';\n\n// Phase 5 guard: single-post only. Phase 7 removes this when carousel publish lands.\nif (format === 'carousel') {\n  throw new Error('Carousel publishing not yet supported — Phase 7 pending. Received format: ' + format);\n}\n\nlet imageUrls = [];\nif (format === 'carousel' && Array.isArray(data.image_urls)) {\n  imageUrls = data.image_urls.map((url, i) => ({ index: i + 1, url }));\n} else if (data.final_image_url) {\n  imageUrls = [{ index: 1, url: data.final_image_url }];\n} else {\n  throw new Error('Prep Re-host Input: no image URL found on approved post (neither final_image_url nor image_urls)');\n}\n\n// post_id: derive from session/timestamp. Prefer an existing session_id if present (set by Recuperar sesion Supabase).\nconst postId = data.session_id || ('propulsar_' + Date.now());\n\nreturn [{\n  json: {\n    // Pass ALL upstream fields through so downstream nodes (Sheets Log, future Meta publish)\n    // still have access to topic, type, angle, instagram/facebook text, etc.\n    ...data,\n    // Plus the sub-workflow input fields:\n    image_urls: imageUrls,\n    post_id: postId,\n    approval_number: data.approval_number\n  }\n}];",
         "mode": "runOnceForAllItems"
       },
       "id": "prep-rehost-input",
@@ -445,7 +445,7 @@
         3060,
         380
       ],
-      "notes": "Normalizes single-post (final_image_url) and carousel (image_urls) into the sub-workflow input shape { image_urls: [{index,url}], post_id, approval_number }. Passes all other fields through so downstream nodes retain topic/type/angle/text."
+      "notes": "Normalizes single-post (final_image_url) into the sub-workflow input shape. Carousel briefs are rejected with a runtime error (Phase 7 removes this guard). Passes all other fields through so downstream nodes retain topic/type/angle/text."
     },
     {
       "parameters": {
@@ -647,12 +647,16 @@
           "mappingMode": "defineBelow",
           "value": {
             "Fecha": "={{ new Date().toISOString() }}",
-            "Tema": "={{ $json.topic }}",
-            "Tipo": "={{ $json.type }}",
-            "Angulo": "={{ $json.angle || '' }}",
-            "Plataformas": "={{ Array.isArray($json.platforms) ? $json.platforms.join(', ') : '' }}",
-            "Modelo_Imagen": "={{ $json.image_model }}",
-            "Imagen_URL": "={{ ($json.blob_urls && $json.blob_urls[0] && $json.blob_urls[0].url) || $json.final_image_url || '' }}",
+            "Tema": "={{ $('🔗 Merge Rehost Output').item.json.topic }}",
+            "Tipo": "={{ $('🔗 Merge Rehost Output').item.json.type }}",
+            "Angulo": "={{ $('🔗 Merge Rehost Output').item.json.angle || '' }}",
+            "Plataformas": "={{ Array.isArray($('🔗 Merge Rehost Output').item.json.platforms) ? $('🔗 Merge Rehost Output').item.json.platforms.join(', ') : '' }}",
+            "Modelo_Imagen": "={{ $('🔗 Merge Rehost Output').item.json.image_model }}",
+            "Imagen_URL": "={{ ($('🔗 Merge Rehost Output').item.json.blob_urls && $('🔗 Merge Rehost Output').item.json.blob_urls[0] && $('🔗 Merge Rehost Output').item.json.blob_urls[0].url) || $('🔗 Merge Rehost Output').item.json.final_image_url || '' }}",
+            "IG_URL": "={{ $('🔗 IG: Get Permalink').item.json.permalink }}",
+            "FB_URL": "",
+            "Publicado_En": "={{ new Date().toISOString() }}",
+            "Publish_Status": "success",
             "Estado": "Publicado"
           }
         }
@@ -662,8 +666,8 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.4,
       "position": [
-        2848,
-        384
+        4820,
+        380
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -763,6 +767,121 @@
         1280,
         544
       ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.instagram.com/v22.0/{{ $env.INSTAGRAM_ACCOUNT_ID }}/media",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ image_url: $json.blob_urls[0].url, caption: $json.instagram.caption, access_token: $env.META_PAGE_TOKEN }) }}",
+        "options": {}
+      },
+      "id": "ig-create-container",
+      "name": "📤 IG: Create Container",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3720, 380],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "stopWorkflow",
+      "notes": "Creates IG media container. Idempotent — retry is safe. Reads blob_urls[0].url (permanent Azure URL from Phase 4) and instagram.caption (from GPT-4o). Output: { id: <container_id> }. Common errors: 9004/2207052 (image_url unreachable), 190 (token expired)."
+    },
+    {
+      "parameters": {
+        "amount": 30,
+        "unit": "seconds"
+      },
+      "id": "wait-container-ready",
+      "name": "⏳ Wait 30s (container ready)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [3940, 380],
+      "notes": "Fixed 30s wait per IGPUB-03. Container typically reaches FINISHED in 2-5s for single photos, but 30s gives a safe margin. Phase 5 Success Criterion 5 requires this gap be visible in execution trace. Polling (HARD-03) deferred to v2."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.instagram.com/v22.0/{{ $env.INSTAGRAM_ACCOUNT_ID }}/media_publish",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ creation_id: $json.id, access_token: $env.META_PAGE_TOKEN }) }}",
+        "options": {}
+      },
+      "id": "ig-media-publish",
+      "name": "🚀 IG: media_publish",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [4160, 380],
+      "retryOnFail": false,
+      "maxTries": 1,
+      "waitBetweenTries": 0,
+      "onError": "stopWorkflow",
+      "notes": "CRITICAL: Retry DISABLED (IGPUB-04, ERR-02). media_publish is NOT idempotent — a retry after a timeout where Meta already processed the request creates a duplicate live IG post. If this node fails, execution aborts — Felix manually verifies IG profile and n8n logs. Error 9007/2207027 means container not ready (increase Wait)."
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://graph.instagram.com/v22.0/{{ $json.id }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "fields", "value": "permalink" },
+            { "name": "access_token", "value": "={{ $env.META_PAGE_TOKEN }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ig-get-permalink",
+      "name": "🔗 IG: Get Permalink",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [4380, 380],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000,
+      "onError": "stopWorkflow",
+      "notes": "GETs the published IG post's permalink (IGPUB-05). Input: { id: <media_id> } from media_publish. Output: { id, permalink }. Idempotent GET — retry is safe."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.ycloud.com/v2/whatsapp/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-API-Key", "value": "={{ $env.YCLOUD_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ from: $env.YCLOUD_WHATSAPP_NUMBER, to: $('🔗 Merge Rehost Output').item.json.approval_number, type: 'text', text: { body: '✓ Publicado en Instagram\\n\\nTema: ' + $('🔗 Merge Rehost Output').item.json.topic + '\\nURL: ' + $json.permalink + '\\nHora: ' + new Date().toISOString() } }) }}",
+        "options": {}
+      },
+      "id": "notify-wa-success",
+      "name": "✅ Notify WhatsApp Success",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [4600, 380],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000,
+      "onError": "stopWorkflow",
+      "notes": "Sends WhatsApp text with 'Publicado' + IG permalink + timestamp (NOTIF-01). Cross-refs Merge Rehost Output for topic + approval_number because $json at this point is { id, permalink } from the permalink GET. Uses JSON.stringify({...}) wrapper per project pattern from commit effab36 to avoid quote-escaping issues."
     }
   ],
   "connections": {
@@ -1098,6 +1217,61 @@
       ]
     },
     "🔗 Merge Rehost Output": {
+      "main": [
+        [
+          {
+            "node": "📤 IG: Create Container",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📤 IG: Create Container": {
+      "main": [
+        [
+          {
+            "node": "⏳ Wait 30s (container ready)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⏳ Wait 30s (container ready)": {
+      "main": [
+        [
+          {
+            "node": "🚀 IG: media_publish",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🚀 IG: media_publish": {
+      "main": [
+        [
+          {
+            "node": "🔗 IG: Get Permalink",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔗 IG: Get Permalink": {
+      "main": [
+        [
+          {
+            "node": "✅ Notify WhatsApp Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "✅ Notify WhatsApp Success": {
       "main": [
         [
           {
