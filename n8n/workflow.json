@@ -731,9 +731,13 @@
     {
       "parameters": {
         "documentId": {
+          "__rl": true,
+          "mode": "id",
           "value": "={{ $env.GOOGLE_SHEETS_ID }}"
         },
         "sheetName": {
+          "__rl": true,
+          "mode": "name",
           "value": "Log"
         },
         "columns": {
