@@ -324,6 +324,20 @@
     },
     {
       "parameters": {
+        "jsCode": "// Insert pending approval session into Supabase so the WA reply webhook can match it.\n// Runs between 'Normalizar URL imagen' (which added final_image_url) and 'Enviar preview imagen'.\n// Flattens nested instagram/facebook objects (from Parsear contenido) into the flat schema columns:\n//   instagram_caption, facebook_caption (the content_sessions table does not have JSON objects).\n// Phase 5 scope: single-post only. Carousel support needs schema extension (format + image_urls).\n\nconst data = $input.first().json;\n\nconst supabaseUrl = $env.SUPABASE_URL;\nconst supabaseKey = $env.SUPABASE_ANON_KEY;\nif (!supabaseUrl || !supabaseKey) {\n  throw new Error('Supabase no configurado: faltan SUPABASE_URL o SUPABASE_ANON_KEY');\n}\n\nconst session = {\n  session_id: 'propulsar_' + Date.now(),\n  approval_number: data.approval_number,\n  topic: data.topic,\n  type: data.type,\n  angle: data.angle || null,\n  platforms: data.platforms || [],\n  image_model: data.image_model,\n  image_url: data.image_url || null,\n  final_image_url: data.final_image_url,\n  instagram_caption: data.instagram && data.instagram.caption ? data.instagram.caption : null,\n  facebook_caption: data.facebook && data.facebook.caption ? data.facebook.caption : null,\n  status: 'pending'\n};\n\nconst https = require('https');\nconst url = new URL(supabaseUrl + '/rest/v1/content_sessions');\nconst body = JSON.stringify(session);\n\nconst inserted = await new Promise((resolve, reject) => {\n  const req = https.request({\n    hostname: url.hostname,\n    path: url.pathname,\n    method: 'POST',\n    headers: {\n      'apikey': supabaseKey,\n      'Authorization': 'Bearer ' + supabaseKey,\n      'Content-Type': 'application/json',\n      'Prefer': 'return=representation',\n      'Content-Length': Buffer.byteLength(body)\n    }\n  }, (res) => {\n    let d = '';\n    res.on('data', c => d += c);\n    res.on('end', () => {\n      if (res.statusCode >= 200 && res.statusCode < 300) {\n        try { resolve(JSON.parse(d)[0]); } catch (e) { reject(new Error('Invalid Supabase response: ' + d.slice(0, 300))); }\n      } else {\n        reject(new Error('Supabase insert failed (' + res.statusCode + '): ' + d.slice(0, 300)));\n      }\n    });\n  });\n  req.on('error', reject);\n  req.write(body);\n  req.end();\n});\n\n// Pass original data forward (preview send + caption build still need nested instagram/facebook objects)\n// plus the session_id from the insert for traceability.\nreturn [{ json: { ...data, session_id: inserted.session_id, supabase_row_id: inserted.id } }];"
+      },
+      "id": "save-session-supabase",
+      "name": "💾 Guardar sesión Supabase",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1632,
+        600
+      ],
+      "notes": "Inserts a pending approval session into content_sessions so the '🔍 Recuperar sesión Supabase' node (on the WA reply side) can find it when the user replies SI. Flat schema (instagram_caption, facebook_caption) — not nested. Required for the full single-post publish flow. Added during Phase 5 Plan 05-02 after discovering the workflow had no session-insert side (only retrieval)."
+    },
+    {
+      "parameters": {
         "jsCode": "// Handle single-post and carousel — read from correct upstream node\nlet d;\ntry {\n  d = $('🗂️ Collect Image URLs').first().json;\n} catch(e1) {\n  try {\n    d = $('🔗 Normalizar URL imagen').first().json;\n  } catch(e2) {\n    d = $input.first().json;\n  }\n}\n\nconst isCarousel = d.format === 'carousel';\n\nconst typeEmoji  = { educational:'📚', authority:'🎤', case_study:'🏆' };\nconst typeLabel  = { educational:'Educativo', authority:'Autoridad', case_study:'Caso de éxito' };\nconst modelInfo  = {\n  flux:       '⚡ Flux 2 Pro',\n  ideogram:   '🔤 Ideogram v3',\n  nanoBanana: '🍌 Nano Banana Pro',\n  custom:     '📎 Imagen propia',\n};\n\nconst igPreview = d.instagram?.caption?.substring(0, 280) || 'N/A';\nconst fbPreview = d.facebook?.caption?.substring(0, 180) || 'N/A';\nconst igDots = (d.instagram?.caption?.length || 0) > 280 ? '...' : '';\nconst fbDots = (d.facebook?.caption?.length || 0)  > 180 ? '...' : '';\n\nconst imageStatus = isCarousel\n  ? `🎠 ${d.image_urls?.length || 0} imágenes generadas (carrusel)`\n  : `🖼️ ${d.final_image_url ? '✅ Imagen generada' : '⚠️ Sin imagen'}`;\n\nconst formatLine = isCarousel\n  ? `\\n🎠 *Formato:* Carrusel (${d.num_images} slides)`\n  : '';\n\nconst msg = `🚀 *PROPULSAR CONTENT ENGINE*\n\n${typeEmoji[d.type] || '📝'} *Tipo:* ${typeLabel[d.type] || d.type}\n📌 *Tema:* ${d.topic}\n${d.angle ? `🎯 *Ángulo:* ${d.angle}\\n` : ''}📱 *Redes:* ${(d.platforms || []).join(', ')}\n🖼️ *Imagen:* ${modelInfo[d.image_model] || d.image_model}${formatLine}\n\n━━━━━━━━━━━━━━━━\n📸 *INSTAGRAM:*\n${igPreview}${igDots}\n\n━━━━━━━━━━━━━━━━\n👥 *FACEBOOK:*\n${fbPreview}${fbDots}\n\n━━━━━━━━━━━━━━━━\n${imageStatus}\n\n*¿Publicar?*\n✅ *SI* para publicar\n❌ *NO* para cancelar`;\n\nreturn [{ json: { ...d, whatsapp_message: msg, session_id: `propulsar_${Date.now()}` } }];"
       },
       "id": "prepare-whatsapp",
@@ -780,7 +794,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ image_url: $json.blob_urls[0].url, caption: $json.instagram.caption, access_token: $env.META_PAGE_TOKEN }) }}",
+        "jsonBody": "={{ JSON.stringify({ image_url: $json.blob_urls[0].url, caption: $json.instagram_caption, access_token: $env.META_PAGE_TOKEN }) }}",
         "options": {}
       },
       "id": "ig-create-container",
@@ -1081,6 +1095,17 @@
       ]
     },
     "🔗 Normalizar URL imagen": {
+      "main": [
+        [
+          {
+            "node": "💾 Guardar sesión Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "💾 Guardar sesión Supabase": {
       "main": [
         [
           {
