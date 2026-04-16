@@ -60,7 +60,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Generate date-prefixed UUID blob name.\n// Detect extension from source URL ending, default to .jpg.\nconst { randomUUID } = require('crypto');\n\nconst now = new Date();\nconst y = now.getUTCFullYear();\nconst m = String(now.getUTCMonth() + 1).padStart(2, '0');\nconst d = String(now.getUTCDate()).padStart(2, '0');\n\n// Infer extension from URL path (strip query string first).\nconst sourceUrl = $json.source_url || '';\nconst pathOnly = sourceUrl.split('?')[0].toLowerCase();\nlet ext = 'jpg';\nlet contentType = 'image/jpeg';\nif (pathOnly.endsWith('.png')) {\n  ext = 'png';\n  contentType = 'image/png';\n} else if (pathOnly.endsWith('.webp')) {\n  ext = 'webp';\n  contentType = 'image/webp';\n}\n\nconst blobName = `${y}/${m}/${d}/${randomUUID()}.${ext}`;\n\nreturn {\n  json: {\n    ...$json,\n    blob_name: blobName,\n    content_type: contentType,\n  }\n};",
+        "jsCode": "// Generate date-prefixed UUID blob name.\n// Detect extension from source URL ending, default to .jpg.\n// UUID v4 generated without require('crypto') because the n8n task runner\n// sandbox disallows that module. Math.random is sufficient for blob-name\n// uniqueness at our volume (collision probability << 10^-18 per post).\nfunction uuidV4() {\n  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {\n    const r = (Math.random() * 16) | 0;\n    const v = c === 'x' ? r : (r & 0x3) | 0x8;\n    return v.toString(16);\n  });\n}\n\nconst now = new Date();\nconst y = now.getUTCFullYear();\nconst m = String(now.getUTCMonth() + 1).padStart(2, '0');\nconst d = String(now.getUTCDate()).padStart(2, '0');\n\nconst sourceUrl = $json.source_url || '';\nconst pathOnly = sourceUrl.split('?')[0].toLowerCase();\nlet ext = 'jpg';\nlet contentType = 'image/jpeg';\nif (pathOnly.endsWith('.png')) {\n  ext = 'png';\n  contentType = 'image/png';\n} else if (pathOnly.endsWith('.webp')) {\n  ext = 'webp';\n  contentType = 'image/webp';\n}\n\nconst blobName = y + '/' + m + '/' + d + '/' + uuidV4() + '.' + ext;\n\n// Preserve binary from the HTTP GET upstream — the HTTP PUT needs `data`\n// attached to the item. Code nodes do not forward binary automatically.\nreturn {\n  json: {\n    ...$json,\n    blob_name: blobName,\n    content_type: contentType,\n  },\n  binary: $binary,\n};",
         "mode": "runOnceForEachItem"
       },
       "id": "build-blob-name",
@@ -123,43 +123,13 @@
     },
     {
       "parameters": {
-        "mode": "manual",
-        "duplicateItem": false,
-        "assignments": {
-          "assignments": [
-            {
-              "id": "f1",
-              "name": "blob_url",
-              "value": "=https://{{ $env.AZURE_STORAGE_ACCOUNT }}.blob.core.windows.net/{{ $env.AZURE_CONTAINER }}/{{ $('🔧 Build blob name').item.json.blob_name }}",
-              "type": "string"
-            },
-            {
-              "id": "f2",
-              "name": "slide_index",
-              "value": "={{ $('🔧 Build blob name').item.json.slide_index }}",
-              "type": "number"
-            },
-            {
-              "id": "f3",
-              "name": "post_id",
-              "value": "={{ $('🔧 Build blob name').item.json.post_id }}",
-              "type": "string"
-            },
-            {
-              "id": "f4",
-              "name": "approval_number",
-              "value": "={{ $('🔧 Build blob name').item.json.approval_number }}",
-              "type": "string"
-            }
-          ]
-        },
-        "includeOtherFields": true,
-        "options": {}
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Construct the public blob URL from env vars + blob_name.\n// Pull fields from the Build blob name node upstream because the HTTP PUT\n// response replaces $json with only {headers, statusCode, statusMessage}.\n// Env access is allowed here because N8N_BLOCK_ENV_ACCESS_IN_NODE=false\n// on this Container App revision (verified 2026-04-16).\nconst ctx = $('🔧 Build blob name').item.json;\nconst account = $env.AZURE_STORAGE_ACCOUNT;\nconst container = $env.AZURE_CONTAINER;\n\nreturn {\n  json: {\n    blob_url: 'https://' + account + '.blob.core.windows.net/' + container + '/' + ctx.blob_name,\n    blob_name: ctx.blob_name,\n    slide_index: ctx.slide_index,\n    post_id: ctx.post_id,\n    approval_number: ctx.approval_number,\n    source_url: ctx.source_url,\n    content_type: ctx.content_type,\n    put_status: $json.statusCode,\n  },\n};"
       },
       "id": "build-blob-url",
       "name": "🔧 Build blob URL",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
         1340,
         300
@@ -190,7 +160,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Aggregate all per-item blob URLs into a single output item, sorted by slide_index.\nconst items = $input.all();\nconst postId = items[0]?.json?.post_id || null;\n\nconst blobUrls = items\n  .map(it => ({\n    index: it.json.slide_index,\n    url: it.json.blob_url,\n  }))\n  .filter(b => b.url)\n  .sort((a, b) => a.index - b.index);\n\nreturn [{\n  json: {\n    blob_urls: blobUrls,\n    post_id: postId,\n  }\n}];",
+        "jsCode": "// Aggregate all per-item blob URLs into a single output item, sorted by slide_index.\n// Source the data from the Build blob URL node (not $input, because the HEAD\n// verify node replaces $json with response headers).\nconst items = $('🔧 Build blob URL').all();\nconst postId = items[0]?.json?.post_id || null;\n\nconst blobUrls = items\n  .map(it => ({\n    index: it.json.slide_index,\n    url: it.json.blob_url,\n  }))\n  .filter(b => b.url)\n  .sort((a, b) => a.index - b.index);\n\nreturn [{\n  json: {\n    blob_urls: blobUrls,\n    post_id: postId,\n  }\n}];",
         "mode": "runOnceForAllItems"
       },
       "id": "collect-blobs",
