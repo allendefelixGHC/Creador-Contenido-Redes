@@ -338,7 +338,13 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ session_id: 'propulsar_' + Date.now(), approval_number: $json.approval_number, topic: $json.topic, type: $json.type, angle: $json.angle || null, platforms: $json.platforms || [], image_model: $json.image_model, image_url: $json.image_url || null, final_image_url: $json.final_image_url, instagram_caption: ($json.instagram && $json.instagram.caption) || null, facebook_caption: ($json.facebook && $json.facebook.caption) || null, status: 'pending' }) }}",
-        "options": {}
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
       },
       "id": "save-session-supabase",
       "name": "💾 Guardar sesión Supabase",
@@ -500,7 +506,13 @@
             { "name": "limit", "value": "1" }
           ]
         },
-        "options": {}
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
       },
       "id": "retrieve-session",
       "name": "🔍 Recuperar sesión Supabase",
