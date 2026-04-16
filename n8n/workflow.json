@@ -324,17 +324,63 @@
     },
     {
       "parameters": {
-        "jsCode": "// Insert pending approval session into Supabase so the WA reply webhook can match it.\n// Runs between 'Normalizar URL imagen' and 'Enviar preview imagen'.\n// Flattens nested instagram/facebook objects (from Parsear contenido) into the flat schema columns\n// (content_sessions has instagram_caption + facebook_caption as strings, not JSON objects).\n// Uses $helpers.httpRequest() because the task runner sandbox disallows require('https') and global fetch.\n\nconst data = $input.first().json;\n\nconst supabaseUrl = $env.SUPABASE_URL;\nconst supabaseKey = $env.SUPABASE_ANON_KEY;\nif (!supabaseUrl || !supabaseKey) {\n  throw new Error('Supabase no configurado: faltan SUPABASE_URL o SUPABASE_ANON_KEY');\n}\n\nconst session = {\n  session_id: 'propulsar_' + Date.now(),\n  approval_number: data.approval_number,\n  topic: data.topic,\n  type: data.type,\n  angle: data.angle || null,\n  platforms: data.platforms || [],\n  image_model: data.image_model,\n  image_url: data.image_url || null,\n  final_image_url: data.final_image_url,\n  instagram_caption: data.instagram && data.instagram.caption ? data.instagram.caption : null,\n  facebook_caption: data.facebook && data.facebook.caption ? data.facebook.caption : null,\n  status: 'pending'\n};\n\nconst inserted = await $helpers.httpRequest({\n  method: 'POST',\n  url: supabaseUrl + '/rest/v1/content_sessions',\n  headers: {\n    'apikey': supabaseKey,\n    'Authorization': 'Bearer ' + supabaseKey,\n    'Content-Type': 'application/json',\n    'Prefer': 'return=representation'\n  },\n  body: session,\n  json: true\n});\n\nconst row = Array.isArray(inserted) ? inserted[0] : inserted;\nif (!row || !row.session_id) {\n  throw new Error('Supabase insert returned unexpected shape: ' + JSON.stringify(inserted).slice(0, 300));\n}\n\n// Pass original data forward (preview send + caption build still need nested instagram/facebook objects)\n// plus the session_id from the insert for traceability.\nreturn [{ json: { ...data, session_id: row.session_id, supabase_row_id: row.id } }];"
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/content_sessions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_ANON_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_ANON_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=representation" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ session_id: 'propulsar_' + Date.now(), approval_number: $json.approval_number, topic: $json.topic, type: $json.type, angle: $json.angle || null, platforms: $json.platforms || [], image_model: $json.image_model, image_url: $json.image_url || null, final_image_url: $json.final_image_url, instagram_caption: ($json.instagram && $json.instagram.caption) || null, facebook_caption: ($json.facebook && $json.facebook.caption) || null, status: 'pending' }) }}",
+        "options": {}
       },
       "id": "save-session-supabase",
       "name": "💾 Guardar sesión Supabase",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         1632,
         600
       ],
-      "notes": "Inserts a pending approval session into content_sessions so the '🔍 Recuperar sesión Supabase' node (on the WA reply side) can find it when the user replies SI. Flat schema (instagram_caption, facebook_caption) — not nested. Required for the full single-post publish flow. Added during Phase 5 Plan 05-02 after discovering the workflow had no session-insert side (only retrieval)."
+      "notes": "Inserts pending approval session into content_sessions (flat schema — instagram_caption/facebook_caption strings, not nested). Built as HTTP Request (not Code) because n8n task runner sandbox blocks require('https'), global fetch, and $helpers.httpRequest. Response = array of the inserted row."
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            { "id": "a1", "name": "topic", "type": "string", "value": "={{ $('🔗 Normalizar URL imagen').item.json.topic }}" },
+            { "id": "a2", "name": "type", "type": "string", "value": "={{ $('🔗 Normalizar URL imagen').item.json.type }}" },
+            { "id": "a3", "name": "angle", "type": "string", "value": "={{ $('🔗 Normalizar URL imagen').item.json.angle || '' }}" },
+            { "id": "a4", "name": "platforms", "type": "array", "value": "={{ $('🔗 Normalizar URL imagen').item.json.platforms }}" },
+            { "id": "a5", "name": "image_model", "type": "string", "value": "={{ $('🔗 Normalizar URL imagen').item.json.image_model }}" },
+            { "id": "a6", "name": "final_image_url", "type": "string", "value": "={{ $('🔗 Normalizar URL imagen').item.json.final_image_url }}" },
+            { "id": "a7", "name": "approval_number", "type": "string", "value": "={{ $('🔗 Normalizar URL imagen').item.json.approval_number }}" },
+            { "id": "a8", "name": "instagram", "type": "object", "value": "={{ $('🔗 Normalizar URL imagen').item.json.instagram }}" },
+            { "id": "a9", "name": "facebook", "type": "object", "value": "={{ $('🔗 Normalizar URL imagen').item.json.facebook }}" },
+            { "id": "a10", "name": "session_id", "type": "string", "value": "={{ $json.session_id }}" },
+            { "id": "a11", "name": "supabase_row_id", "type": "string", "value": "={{ $json.id }}" }
+          ]
+        },
+        "includeOtherFields": false,
+        "options": {}
+      },
+      "id": "reattach-session-data",
+      "name": "🔗 Re-attach session data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1744,
+        600
+      ],
+      "notes": "Supabase HTTP Request replaced the item with the inserted row (flat schema — no nested instagram/facebook objects). Re-attach the pre-insert data via cross-ref to Normalizar URL imagen so downstream nodes (Preparar mensaje WA, etc.) keep working with the nested object shape. Adds session_id + supabase_row_id from the insert response."
     },
     {
       "parameters": {
@@ -435,16 +481,36 @@
     },
     {
       "parameters": {
-        "jsCode": "// Recupera la sesión pendiente de Supabase matcheando approval_number = número del inbound.\n// Usa $helpers.httpRequest() (el sandbox del task runner bloquea require('https') y global fetch).\nconst phone = $json.body?.whatsappInboundMessage?.from;\nconst supabaseUrl = $env.SUPABASE_URL;\nconst supabaseKey = $env.SUPABASE_ANON_KEY;\n\nif (!supabaseUrl || !supabaseKey) {\n  console.log('Supabase no configurado — modo testing');\n  return [{ json: { approved: true, topic: 'TEST', note: 'Configurar Supabase' } }];\n}\n\nconst rows = await $helpers.httpRequest({\n  method: 'GET',\n  url: supabaseUrl + '/rest/v1/content_sessions',\n  qs: {\n    approval_number: 'eq.' + phone,\n    status: 'eq.pending',\n    order: 'created_at.desc',\n    limit: '1'\n  },\n  headers: {\n    'apikey': supabaseKey,\n    'Authorization': 'Bearer ' + supabaseKey\n  },\n  json: true\n});\n\nconst session = Array.isArray(rows) && rows.length ? rows[0] : null;\nif (!session) throw new Error('Sesión pendiente no encontrada para: ' + phone);\nreturn [{ json: session }];"
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/content_sessions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_ANON_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_ANON_KEY }}" },
+            { "name": "Accept", "value": "application/vnd.pgrst.object+json" }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "approval_number", "value": "=eq.{{ $json.body.whatsappInboundMessage.from }}" },
+            { "name": "status", "value": "eq.pending" },
+            { "name": "order", "value": "created_at.desc" },
+            { "name": "limit", "value": "1" }
+          ]
+        },
+        "options": {}
       },
       "id": "retrieve-session",
       "name": "🔍 Recuperar sesión Supabase",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         2624,
         384
-      ]
+      ],
+      "notes": "GET pending session from content_sessions, filtered by approval_number = phone + status=pending. Uses PostgREST Accept header 'application/vnd.pgrst.object+json' so response is a SINGLE object (not array), giving downstream nodes the flat session directly. Empty result → 406 → execution fails with clear error (same as the old Code node behavior). Built as HTTP Request because n8n task runner sandbox blocks every HTTP helper inside Code nodes."
     },
     {
       "parameters": {
@@ -1106,6 +1172,17 @@
       ]
     },
     "💾 Guardar sesión Supabase": {
+      "main": [
+        [
+          {
+            "node": "🔗 Re-attach session data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔗 Re-attach session data": {
       "main": [
         [
           {
