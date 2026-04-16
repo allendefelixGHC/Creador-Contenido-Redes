@@ -70,7 +70,9 @@ See [v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md) for full phase details.
   3. Manually killing the publish network call mid-flight does NOT create a duplicate post on Instagram (confirms `media_publish` retry is disabled)
   4. The Google Sheets log gains `IG_URL` and `Publicado_En` columns; the new row contains the permalink and publication timestamp
   5. The n8n execution shows a 30-second Wait between container creation and `media_publish`, confirming the container readiness guard is in place
-**Plans**: TBD
+**Plans**: 2 plans
+- [ ] 05-01-PLAN.md — Add IG publish chain (5 new nodes + carousel guard + Sheets Log cross-refs) to n8n/workflow.json
+- [ ] 05-02-PLAN.md — Deploy to n8n-azure, add Sheet columns, run Tests A (happy path) + B (duplicate prevention) + C (30s Wait trace)
 
 ### Phase 6: Facebook Single-Photo Publishing
 **Goal**: After SI approval, the same single-photo post is also published to Facebook and both the IG and FB URLs appear together in the WhatsApp success message
@@ -125,7 +127,7 @@ See [v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md) for full phase details.
 | 2. n8n Content Generation | v1.0 | 2/2 | Complete | 2026-04-06 |
 | 3. n8n Image Generation + WhatsApp Preview | v1.0 | 3/3 | Complete | 2026-04-06 |
 | 4. Azure Blob Re-hosting | v1.1 | 0/? | Not started | - |
-| 5. Instagram Single-Photo Publishing | v1.1 | 0/? | Not started | - |
+| 5. Instagram Single-Photo Publishing | v1.1 | 0/2 | Not started | - |
 | 6. Facebook Single-Photo Publishing | v1.1 | 0/? | Not started | - |
 | 7. Carousel Publishing (IG + FB) | v1.1 | 0/? | Not started | - |
 | 8. Scheduling | v1.1 | 0/? | Not started | - |
