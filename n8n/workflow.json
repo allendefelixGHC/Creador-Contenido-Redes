@@ -544,8 +544,9 @@
         "source": "database",
         "workflowId": {
           "__rl": true,
-          "mode": "id",
-          "value": "BIaG266Q6AZpv4Sq"
+          "mode": "list",
+          "value": "BIaG266Q6AZpv4Sq",
+          "cachedResultName": "Re-host Images to Azure Blob"
         },
         "workflowInputs": {
           "mappingMode": "passthrough"
