@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-04-10)
 
 **Core value:** Generate complete social media posts (single or carousel) in one wizard run, with AI-generated images and WhatsApp preview — and now automatically publish to Instagram + Facebook after SI approval
-**Current focus:** v1.1 — Phase 4 complete; next is Phase 5 (Instagram Single-Photo Publishing)
+**Current focus:** v1.1 — Phase 5 Plan 01 complete; next is Phase 5 Plan 02 (deploy + E2E test)
 
 ## Current Position
 
 Milestone: v1.1 Automatic Publishing
-Phase: 4 of 9 (Azure Blob Re-hosting) — **COMPLETE 2026-04-16**
-Next: Phase 5 (Instagram Single-Photo Publishing)
-Last activity: 2026-04-16 — Plan 04-02 Task 2 executed by agent via direct sub-workflow invocation; Tests A/B/C all PASS; 3 Plan-01 sub-workflow bugs found and patched (crypto require, binary preservation, Set-node cross-ref, Collect aggregation)
+Phase: 5 of 9 (Instagram Single-Photo Publishing) — Plan 01 COMPLETE 2026-04-16
+Next: Phase 5 Plan 02 (deploy workflow to n8n-azure + E2E test)
+Last activity: 2026-04-16 — Plan 05-01 executed: 5-node IG publish chain inserted in main workflow (Create Container, Wait 30s, media_publish retry=false, Get Permalink, Notify WA Success), Sheets Log repositioned and columns updated, carousel guard added. Commit 81d66e6.
 
-Progress: [██░░░░░░░░] ~17% (v1.1, 2/12 plans — Phase 4 complete) — [██████████] 100% (v1.0 complete)
+Progress: [███░░░░░░░] ~25% (v1.1, 3/12 plans — Phase 4 complete, Phase 5 Plan 01 complete) — [██████████] 100% (v1.0 complete)
 
 ## Performance Metrics
 
@@ -35,6 +35,7 @@ Progress: [██░░░░░░░░] ~17% (v1.1, 2/12 plans — Phase 4 co
 | Phase | Plans | Status |
 |-------|-------|--------|
 | 4. Azure Blob Re-hosting | 2 | **Complete** — Plan 01 + Plan 02 (Task 1 + Task 2) all green; Tests A/B/C PASS 2026-04-16 |
+| 5. Instagram Single-Photo Publishing | 2 | Plan 01 complete 2026-04-16; Plan 02 (deploy + E2E) pending |
 
 **Plan execution history (v1.1):**
 
@@ -42,6 +43,7 @@ Progress: [██░░░░░░░░] ~17% (v1.1, 2/12 plans — Phase 4 co
 |------|----------|-------|-------|---------|
 | 04-01 | ~4 min | 2 | 1 created | d41167d (Task 1, Azure pre-resolved), 052d129 (Task 2, sub-workflow JSON) |
 | 04-02 | ~3 min (Task 1) + ~30 min (Task 2 agent run, incl. 3 bug fixes) | 2/2 complete | 2 modified | 23d195d (Task 1, wire sub-workflow into main), TBD (Task 2 fixes to `subworkflow-rehost-images.json`) |
+| 05-01 | ~15 min | 1/1 complete | 1 modified | 81d66e6 (Task 1, IG publish chain + guard + columns) |
 
 ## Accumulated Context
 
@@ -64,6 +66,10 @@ Recent decisions relevant to v1.1:
 - [Phase 04]: Sub-workflow imported via n8n public API (POST /api/v1/workflows) instead of manual UI import — orchestrator resolved the blocked SUBFLOW_ID dependency programmatically
 - [Phase 04 Task 2]: Plan 01's sub-workflow `require('crypto')` doesn't work inside the n8n task runner sandbox — use Math.random-based UUID v4 instead. Also, n8n Code nodes must explicitly forward `binary: $binary` to preserve HTTP GET binary data through the chain; Set v3.0 silently drops cross-node `.item.json.*` assignments in fan-out chains — use a Code node when crossing node references.
 - [Phase 04 Task 2]: Sub-workflow Supabase session contract is **single-post only** in the current `content_sessions` schema (no `format`, `image_urls` columns). Carousel approval flow via Supabase requires schema extension, deferred until a publishing phase needs it end-to-end.
+- [Phase 05 Plan 01]: IG publish chain uses $json.instagram.caption (not $json.instagram) — GPT-4o parser returns instagram as an object {caption, image_prompt}, RESEARCH.md snippet was incorrect on this point.
+- [Phase 05 Plan 01]: FB_URL declared as empty string in Sheets Log to lock column order; Phase 6 only changes the expression value, not the column structure.
+- [Phase 05 Plan 01]: carousel guard added to Prep Re-host Input — throws for format=carousel. Phase 7 removes this guard when carousel publish ships.
+- [Phase 05 Plan 01]: media_publish node has retryOnFail=false, maxTries=1 — it is the ONLY node in the workflow with retry explicitly disabled. This is the duplicate-post defense (IGPUB-04/ERR-02).
 
 ### Pending Todos
 
@@ -81,5 +87,5 @@ Recent decisions relevant to v1.1:
 ## Session Continuity
 
 Last session: 2026-04-16
-Stopped at: Phase 4 complete. Tests A/B/C passed. Sub-workflow bug fixes committed to local file `n8n/subworkflow-rehost-images.json` (uncommitted as of writing). Next logical action: commit the fixes, then `/gsd:plan-phase 5` to start Instagram Single-Photo Publishing.
-Resume file: .planning/phases/04-azure-blob-re-hosting/04-02-SUMMARY.md (Task 2 Results section)
+Stopped at: Completed 05-01-PLAN.md — IG publish chain added, all 13 verification checks pass, commit 81d66e6. Next: Plan 05-02 (deploy to n8n-azure + E2E test). Before 05-02: Felix must add 4 new columns to Google Sheet (IG_URL, FB_URL, Publicado_En, Publish_Status).
+Resume file: .planning/phases/05-instagram-single-photo-publishing/05-01-SUMMARY.md
