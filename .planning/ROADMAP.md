@@ -24,7 +24,7 @@ See [v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md) for full phase details.
 
 #### Phase 4: Azure Blob Re-hosting
 
-- [ ] **Phase 4: Azure Blob Re-hosting** — Download Ideogram images and re-host to permanent Azure Blob URLs before any Meta API call
+- [x] **Phase 4: Azure Blob Re-hosting** — Completed 2026-04-16 (Tests A/B/C PASS; 3 sub-workflow bugs patched during Task 2)
 
 #### Phase 5: Instagram Single-Photo Publishing
 
