@@ -558,7 +558,7 @@
       "id": "execute-rehost-subflow",
       "name": "🔁 Re-host Images",
       "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1,
+      "typeVersion": 1.2,
       "position": [
         3280,
         380
