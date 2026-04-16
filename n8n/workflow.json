@@ -404,7 +404,7 @@
         "conditions": {
           "string": [
             {
-              "value1": "={{ $json.body?.message?.text?.body?.trim().toUpperCase() }}",
+              "value1": "={{ $json.body?.whatsappInboundMessage?.text?.body?.trim().toUpperCase() }}",
               "value2": "SI"
             }
           ]
@@ -421,7 +421,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Recuperar sesión de Supabase\nconst phone = $json.body?.message?.from;\nconst supabaseUrl = $env.SUPABASE_URL;\nconst supabaseKey = $env.SUPABASE_ANON_KEY;\n\nif (!supabaseUrl || !supabaseKey) {\n  console.log('Supabase no configurado — modo testing');\n  return [{ json: { approved: true, topic: 'TEST', note: 'Configurar Supabase' } }];\n}\n\nconst https = require('https');\nconst url = new URL(`${supabaseUrl}/rest/v1/content_sessions?approval_number=eq.${phone}&status=eq.pending&order=created_at.desc&limit=1`);\n\nconst session = await new Promise((resolve, reject) => {\n  const req = https.get({\n    hostname: url.hostname,\n    path: url.pathname + url.search,\n    headers: { 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}` }\n  }, (res) => {\n    let d = '';\n    res.on('data', c => d += c);\n    res.on('end', () => { try { resolve(JSON.parse(d)[0] || null); } catch { resolve(null); }});\n  });\n  req.on('error', reject);\n});\n\nif (!session) throw new Error('Sesión pendiente no encontrada para: ' + phone);\nreturn [{ json: session }];"
+        "jsCode": "// Recuperar sesión de Supabase\nconst phone = $json.body?.whatsappInboundMessage?.from;\nconst supabaseUrl = $env.SUPABASE_URL;\nconst supabaseKey = $env.SUPABASE_ANON_KEY;\n\nif (!supabaseUrl || !supabaseKey) {\n  console.log('Supabase no configurado — modo testing');\n  return [{ json: { approved: true, topic: 'TEST', note: 'Configurar Supabase' } }];\n}\n\nconst https = require('https');\nconst url = new URL(`${supabaseUrl}/rest/v1/content_sessions?approval_number=eq.${phone}&status=eq.pending&order=created_at.desc&limit=1`);\n\nconst session = await new Promise((resolve, reject) => {\n  const req = https.get({\n    hostname: url.hostname,\n    path: url.pathname + url.search,\n    headers: { 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}` }\n  }, (res) => {\n    let d = '';\n    res.on('data', c => d += c);\n    res.on('end', () => { try { resolve(JSON.parse(d)[0] || null); } catch { resolve(null); }});\n  });\n  req.on('error', reject);\n});\n\nif (!session) throw new Error('Sesión pendiente no encontrada para: ' + phone);\nreturn [{ json: session }];"
       },
       "id": "retrieve-session",
       "name": "🔍 Recuperar sesión Supabase",
@@ -566,7 +566,7 @@
     },
     {
       "parameters": {
-        "jsCode": "console.log('Rechazado:', $json.body?.message?.from, new Date().toISOString());\nreturn [{ json: { status:'rejected', ts: new Date().toISOString() } }];"
+        "jsCode": "console.log('Rechazado:', $json.body?.whatsappInboundMessage?.from, new Date().toISOString());\nreturn [{ json: { status:'rejected', ts: new Date().toISOString() } }];"
       },
       "id": "log-rejected",
       "name": "❌ Loguear rechazo",
