@@ -37,6 +37,10 @@ See [v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md) for full phase details.
 #### Phase 7: Carousel Publishing (IG + FB)
 
 - [ ] **Phase 7: Carousel Publishing (IG + FB)** — N-child-container IG carousel and `attached_media` FB carousel, both built on top of the proven single-post patterns
+  Plans:
+  - [ ] 07-01-PLAN.md — Supabase schema extension + carousel guard removal + format branch + carousel session save
+  - [ ] 07-02-PLAN.md — IG carousel 3-step chain (7 nodes) + FB carousel attached_media chain + WA notification + Sheets log (7 nodes)
+  - [ ] 07-03-PLAN.md — Deploy to n8n-azure + E2E tests (5-slide, 3-slide, single-post regression)
 
 #### Phase 8: Scheduling
 
@@ -95,7 +99,7 @@ See [v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md) for full phase details.
   2. The same approval creates a FB multi-photo post with all 5 images visible on the Propulsar page
   3. The IG carousel uses the correct 3-step flow (N child containers → parent carousel container → `media_publish`); a 30-second Wait after child container creation is present in the execution trace
   4. The FB carousel body is constructed dynamically from N blob URLs in a Code node (not hardcoded); a brief with 3 slides produces `attached_media[0..2]` and a brief with 7 slides produces `attached_media[0..6]`
-**Plans**: TBD
+**Plans**: 3 plans
 
 ### Phase 8: Scheduling
 **Goal**: Users can choose to publish immediately or at a specific time today or tomorrow (max 24h ahead), and n8n holds the execution safely until that time
@@ -131,6 +135,6 @@ See [v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md) for full phase details.
 | 4. Azure Blob Re-hosting | v1.1 | 2/2 | Complete | 2026-04-16 |
 | 5. Instagram Single-Photo Publishing | v1.1 | 2/2 | Complete | 2026-04-16 |
 | 6. Facebook Single-Photo Publishing | v1.1 | 2/2 | Complete | 2026-04-17 |
-| 7. Carousel Publishing (IG + FB) | v1.1 | 0/? | Not started | - |
+| 7. Carousel Publishing (IG + FB) | v1.1 | 0/3 | Not started | - |
 | 8. Scheduling | v1.1 | 0/? | Not started | - |
 | 9. Error Hardening + Hashtags + Token Alerts | v1.1 | 0/? | Not started | - |
