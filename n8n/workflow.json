@@ -874,7 +874,8 @@
             "IG_URL": "={{ $('🔗 IG: Get Permalink').item.json.permalink }}",
             "FB_URL": "={{ 'https://www.facebook.com/' + $('🌐 FB: Publish Photo').item.json.post_id }}",
             "Publicado_En": "={{ new Date().toISOString() }}",
-            "Publish_Status": "success"
+            "Publish_Status": "success",
+            "Error_Msg": ""
           },
           "schema": [
             {
@@ -979,6 +980,15 @@
             {
               "id": "Publish_Status",
               "displayName": "Publish_Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Error_Msg",
+              "displayName": "Error_Msg",
               "required": false,
               "defaultMatch": false,
               "display": true,
@@ -1124,9 +1134,9 @@
         480
       ],
       "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 2000,
-      "onError": "stopWorkflow",
+      "maxTries": 2,
+      "waitBetweenTries": 3000,
+      "onError": "continueErrorOutput",
       "notes": "Creates IG media container. Idempotent — retry is safe. Reads blob_urls[0].url (permanent Azure URL from Phase 4) and instagram.caption (from GPT-4o). Output: { id: <container_id> }. Common errors: 9004/2207052 (image_url unreachable), 190 (token expired)."
     },
     {
@@ -1173,7 +1183,7 @@
       "retryOnFail": false,
       "maxTries": 1,
       "waitBetweenTries": 0,
-      "onError": "stopWorkflow",
+      "onError": "continueErrorOutput",
       "notes": "CRITICAL: Retry DISABLED (IGPUB-04, ERR-02). media_publish is NOT idempotent — a retry after a timeout where Meta already processed the request creates a duplicate live IG post. If this node fails, execution aborts — Felix manually verifies IG profile and n8n logs. Error 9007/2207027 means container not ready (increase Wait)."
     },
     {
@@ -1206,7 +1216,7 @@
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 1000,
-      "onError": "stopWorkflow",
+      "onError": "continueErrorOutput",
       "notes": "GETs the published IG post's permalink (IGPUB-05). Input: { id: <media_id> } from media_publish. Output: { id, permalink }. Idempotent GET — retry is safe."
     },
     {
@@ -1293,7 +1303,7 @@
       "retryOnFail": false,
       "maxTries": 1,
       "waitBetweenTries": 0,
-      "onError": "stopWorkflow",
+      "onError": "continueErrorOutput",
       "position": [
         5040,
         480
@@ -1505,9 +1515,9 @@
         200
       ],
       "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 2000,
-      "onError": "stopWorkflow",
+      "maxTries": 2,
+      "waitBetweenTries": 3000,
+      "onError": "continueErrorOutput",
       "notes": "Creates one IG child container per carousel slide. is_carousel_item=true required by Meta. Idempotent — retry is safe. Runs once per slide (fan-out from Explode). Output: { id: <child_container_id> }."
     },
     {
@@ -1567,9 +1577,9 @@
         200
       ],
       "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 2000,
-      "onError": "stopWorkflow",
+      "maxTries": 2,
+      "waitBetweenTries": 3000,
+      "onError": "continueErrorOutput",
       "notes": "Creates the IG carousel parent container using all child IDs (comma-separated). media_type=CAROUSEL required. Idempotent — retry is safe. Output: { id: <parent_container_id> }."
     },
     {
@@ -1601,7 +1611,7 @@
       "retryOnFail": false,
       "maxTries": 1,
       "waitBetweenTries": 0,
-      "onError": "stopWorkflow",
+      "onError": "continueErrorOutput",
       "notes": "CRITICAL: Retry DISABLED. media_publish is NOT idempotent — retry after timeout where Meta already processed creates a duplicate live carousel post. creation_id = parent container id from previous node. Output: { id: <published_media_id> }."
     },
     {
@@ -1657,7 +1667,7 @@
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 1000,
-      "onError": "stopWorkflow",
+      "onError": "continueErrorOutput",
       "notes": "GETs the published IG carousel post permalink. Idempotent GET — retry is safe. Output: { id, permalink }. Downstream FB chain uses cross-refs to Collect Child IDs for session data."
     },
     {
@@ -1701,10 +1711,10 @@
         5920,
         200
       ],
-      "retryOnFail": false,
-      "maxTries": 1,
-      "waitBetweenTries": 0,
-      "onError": "stopWorkflow",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000,
+      "onError": "continueErrorOutput",
       "notes": "CRITICAL: Retry DISABLED. POST /{PAGE_ID}/photos with published=false creates an unpublished photo that will be included in the multi-photo feed post. Not safe to retry after timeout — could create orphaned unpublished photos. Output: { id: <photo_id> }."
     },
     {
@@ -1766,7 +1776,7 @@
       "retryOnFail": false,
       "maxTries": 1,
       "waitBetweenTries": 0,
-      "onError": "stopWorkflow",
+      "onError": "continueErrorOutput",
       "notes": "CRITICAL: Retry DISABLED. POST /{PAGE_ID}/feed with attached_media is NOT idempotent — retry creates a duplicate live FB carousel post. Output: { id: <post_id> }. If this fails with 'Invalid parameter: attached_media', fallback is to switch specifyBody to 'string' and stringify the full body in Build attached_media."
     },
     {
@@ -1831,7 +1841,8 @@
             "IG_URL": "={{ $('🗂️ FB: Collect Photo IDs').first().json.instagram_permalink }}",
             "FB_URL": "={{ 'https://www.facebook.com/' + $('🌐 FB: Publish Carousel Feed').first().json.id }}",
             "Publicado_En": "={{ new Date().toISOString() }}",
-            "Publish_Status": "success"
+            "Publish_Status": "success",
+            "Error_Msg": ""
           },
           "schema": [
             {
@@ -1941,6 +1952,15 @@
               "display": true,
               "type": "string",
               "canBeUsedToMatch": true
+            },
+            {
+              "id": "Error_Msg",
+              "displayName": "Error_Msg",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
             }
           ]
         },
@@ -2013,6 +2033,380 @@
         280
       ],
       "notes": "SCHED-02: Pauses execution for wait_seconds (computed by 🕐 Compute wait_seconds). Uses 'After Time Interval' mode (amount + unit), NOT 'At Specified Time' (unreliable per n8n #14723). wait_seconds is a Number, not string."
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "tag-ig-platform",
+              "name": "_platform",
+              "type": "string",
+              "value": "Instagram"
+            }
+          ]
+        },
+        "options": {
+          "includeOtherFields": true
+        }
+      },
+      "id": "tag-ig-error",
+      "name": "🏷️ Tag IG Error",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        4500,
+        900
+      ],
+      "notes": "Receives error outputs from IG Meta nodes. Adds _platform=Instagram for Parse Meta Error."
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "tag-fb-platform",
+              "name": "_platform",
+              "type": "string",
+              "value": "Facebook"
+            }
+          ]
+        },
+        "options": {
+          "includeOtherFields": true
+        }
+      },
+      "id": "tag-fb-error",
+      "name": "🏷️ Tag FB Error",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        5500,
+        900
+      ],
+      "notes": "Receives error outputs from FB Meta nodes. Adds _platform=Facebook for Parse Meta Error."
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nlet err = {};\ntry {\n  err = raw.error || {};\n  if (!err.code && raw.cause && raw.cause.response && raw.cause.response.body) {\n    const parsed = JSON.parse(raw.cause.response.body);\n    err = parsed.error || err;\n  }\n} catch(e) {}\n\n// Primary: Merge Rehost Output (structural guarantee: always runs before Meta calls)\n// Fallback: Prep Re-host Input (runs even earlier)\nlet mergeData = {};\ntry { mergeData = $('🔗 Merge Rehost Output').first().json; } catch(e) {\n  try { mergeData = $('🔧 Prep Re-host Input').first().json; } catch(e2) {}\n}\n\nreturn [{\n  json: {\n    error_code: err.code || 0,\n    error_message: err.message || 'Error desconocido de Meta API',\n    error_type: err.type || '',\n    fbtrace_id: err.fbtrace_id || '',\n    platform_failed: raw._platform || 'Meta',\n    is_token_expired: (err.type === 'OAuthException' && err.code === 190),\n    approval_number: mergeData.approval_number || '',\n    topic: mergeData.topic || '',\n    blob_urls: mergeData.blob_urls || [],\n  }\n}];",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "parse-meta-error",
+      "name": "🚨 Parse Meta Error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5000,
+        1100
+      ],
+      "notes": "Extracts structured error info from Meta HTTP error response. Cross-refs Merge Rehost Output for approval_number, topic, blob_urls. _platform comes from Tag IG/FB Error nodes."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ String($json.is_token_expired) }}",
+              "value2": "true"
+            }
+          ]
+        }
+      },
+      "id": "check-token-expired",
+      "name": "⚠️ ¿Token Expirado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        5000,
+        1300
+      ],
+      "notes": "Routes OAuthException code 190 (expired token) to specific WA alert mentioning Susana. FALSE output -> generic WA error."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.ycloud.com/v2/whatsapp/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $env.YCLOUD_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ from: $env.YCLOUD_WHATSAPP_NUMBER, to: $json.approval_number, type: \"text\", text: { body: \"⚠️ *Token Meta expirado* — verificar que Susana sigue como admin de la página\\n\\nTema: \" + $json.topic + \"\\nPlataforma: \" + $json.platform_failed + \"\\nfbtrace_id: \" + $json.fbtrace_id } }) }}",
+        "options": {}
+      },
+      "id": "wa-token-expired",
+      "name": "📤 WA: Token Expirado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4600,
+        1500
+      ],
+      "onError": "continueErrorOutput",
+      "notes": "Sends WhatsApp alert for expired Meta token (OAuthException code 190). Mentions Susana as admin. onError=continueErrorOutput so WA failure does not block Sheets fail log."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.ycloud.com/v2/whatsapp/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $env.YCLOUD_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ from: $env.YCLOUD_WHATSAPP_NUMBER, to: $json.approval_number, type: \"text\", text: { body: \"❌ *Error publicando en \" + $json.platform_failed + \"*\\n\\nCódigo: \" + $json.error_code + \"\\nMensaje: \" + $json.error_message + \"\\nTrace ID: \" + $json.fbtrace_id + \"\\nTema: \" + $json.topic } }) }}",
+        "options": {}
+      },
+      "id": "wa-error-publish",
+      "name": "📤 WA: Error Publicación",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5400,
+        1500
+      ],
+      "onError": "continueErrorOutput",
+      "notes": "Sends generic WhatsApp error alert with error_code, error_message, fbtrace_id, platform. onError=continueErrorOutput so WA failure does not block Sheets fail log."
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_ID }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Log"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Fecha": "={{ new Date().toISOString() }}",
+            "Tema": "={{ $json.topic }}",
+            "Tipo": "",
+            "Angulo": "",
+            "Plataformas": "={{ $json.platform_failed }}",
+            "Modelo_Imagen": "",
+            "Imagen_URL": "",
+            "Estado": "Error",
+            "IG_URL": "",
+            "FB_URL": "",
+            "Publicado_En": "={{ new Date().toISOString() }}",
+            "Publish_Status": "failed",
+            "Error_Msg": "={{ $json.error_message + \" [\" + $json.fbtrace_id + \"]\" }}"
+          },
+          "schema": [
+            {
+              "id": "Fecha",
+              "displayName": "Fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Tema",
+              "displayName": "Tema",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Tipo",
+              "displayName": "Tipo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Angulo",
+              "displayName": "Angulo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Plataformas",
+              "displayName": "Plataformas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Modelo_Imagen",
+              "displayName": "Modelo_Imagen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Imagen_URL",
+              "displayName": "Imagen_URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Estado",
+              "displayName": "Estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "IG_URL",
+              "displayName": "IG_URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "FB_URL",
+              "displayName": "FB_URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Publicado_En",
+              "displayName": "Publicado_En",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Publish_Status",
+              "displayName": "Publish_Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Error_Msg",
+              "displayName": "Error_Msg",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "operation": "append",
+        "resource": "sheet"
+      },
+      "id": "sheets-fail-log",
+      "name": "📊 Sheets Fail Log",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        5000,
+        1700
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "XjKteoOTobs1qR55",
+          "name": "Google Sheets account"
+        }
+      },
+      "notes": "Logs publish failures with Publish_Status=failed + Error_Msg. Same credentials and sheet as success log. Receives from both WA: Token Expirado and WA: Error Publicacion (and their error outputs)."
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nlet blobUrls = data.blob_urls || [];\nif (blobUrls.length === 0) {\n  try { blobUrls = $('🔗 Merge Rehost Output').first().json.blob_urls || []; } catch(e) {}\n}\nif (blobUrls.length === 0) return [{ json: { ...data, has_blobs: 'false' } }];\nconst prefix = 'https://propulsarcontent.blob.core.windows.net/posts/';\nreturn blobUrls.map(entry => ({\n  json: {\n    current_blob_name: (entry.url || entry).replace(prefix, '').split('?')[0],\n    approval_number: data.approval_number || '',\n  }\n}));",
+        "mode": "runOnceForAllItems"
+      },
+      "id": "extract-blob-names",
+      "name": "🧹 Extract Blob Names",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5000,
+        1900
+      ],
+      "notes": "Extracts blob names from blob_urls for DELETE. Receives from success Sheets logs AND Sheets Fail Log. Falls back to Merge Rehost Output cross-ref if blob_urls not in item."
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "=https://{{ $env.AZURE_STORAGE_ACCOUNT }}.blob.core.windows.net/{{ $env.AZURE_CONTAINER }}/{{ $json.current_blob_name }}?{{ $env.AZURE_SAS_PARAMS }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-ms-version",
+              "value": "2020-10-02"
+            },
+            {
+              "name": "x-ms-date",
+              "value": "={{ new Date().toUTCString() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "delete-azure-blob",
+      "name": "🗑️ Delete Azure Blob",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5000,
+        2100
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000,
+      "onError": "continueErrorOutput",
+      "notes": "Deletes Azure Blob file. DELETE is idempotent (404 = already deleted, acceptable). retryOnFail=true. onError=continueErrorOutput so 404 does not block execution."
     }
   ],
   "connections": {
@@ -2461,6 +2855,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "🏷️ Tag IG Error",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -2494,6 +2895,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "🏷️ Tag IG Error",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -2502,6 +2910,13 @@
         [
           {
             "node": "💬 IG: Post Carousel Hashtag Comment",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "🏷️ Tag IG Error",
             "type": "main",
             "index": 0
           }
@@ -2516,6 +2931,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "🏷️ Tag IG Error",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -2524,6 +2946,13 @@
         [
           {
             "node": "🖼️ FB: Explode Carousel Slides",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "🏷️ Tag IG Error",
             "type": "main",
             "index": 0
           }
@@ -2546,6 +2975,13 @@
         [
           {
             "node": "🗂️ FB: Collect Photo IDs",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "🏷️ Tag FB Error",
             "type": "main",
             "index": 0
           }
@@ -2582,6 +3018,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "🏷️ Tag FB Error",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -2601,6 +3044,13 @@
         [
           {
             "node": "⏳ Wait 30s (container ready)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "🏷️ Tag IG Error",
             "type": "main",
             "index": 0
           }
@@ -2626,6 +3076,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "🏷️ Tag IG Error",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -2637,6 +3094,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "🏷️ Tag IG Error",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -2645,6 +3109,13 @@
         [
           {
             "node": "🌐 FB: Publish Photo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "🏷️ Tag IG Error",
             "type": "main",
             "index": 0
           }
@@ -2667,6 +3138,13 @@
         [
           {
             "node": "✅ Notify WhatsApp Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "🏷️ Tag FB Error",
             "type": "main",
             "index": 0
           }
@@ -2707,6 +3185,137 @@
         [
           {
             "node": "🔧 Prep Re-host Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🏷️ Tag IG Error": {
+      "main": [
+        [
+          {
+            "node": "🚨 Parse Meta Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🏷️ Tag FB Error": {
+      "main": [
+        [
+          {
+            "node": "🚨 Parse Meta Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🚨 Parse Meta Error": {
+      "main": [
+        [
+          {
+            "node": "⚠️ ¿Token Expirado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⚠️ ¿Token Expirado?": {
+      "main": [
+        [
+          {
+            "node": "📤 WA: Token Expirado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "📤 WA: Error Publicación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📤 WA: Token Expirado": {
+      "main": [
+        [
+          {
+            "node": "📊 Sheets Fail Log",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "📊 Sheets Fail Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📤 WA: Error Publicación": {
+      "main": [
+        [
+          {
+            "node": "📊 Sheets Fail Log",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "📊 Sheets Fail Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📊 Sheets Fail Log": {
+      "main": [
+        [
+          {
+            "node": "🧹 Extract Blob Names",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🧹 Extract Blob Names": {
+      "main": [
+        [
+          {
+            "node": "🗑️ Delete Azure Blob",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📊 Google Sheets Log": {
+      "main": [
+        [
+          {
+            "node": "🧹 Extract Blob Names",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📊 Google Sheets Log (Carousel)": {
+      "main": [
+        [
+          {
+            "node": "🧹 Extract Blob Names",
             "type": "main",
             "index": 0
           }
