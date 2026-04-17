@@ -838,13 +838,125 @@
             "Plataformas": "={{ Array.isArray($('🔗 Merge Rehost Output').item.json.platforms) ? $('🔗 Merge Rehost Output').item.json.platforms.join(', ') : '' }}",
             "Modelo_Imagen": "={{ $('🔗 Merge Rehost Output').item.json.image_model }}",
             "Imagen_URL": "={{ ($('🔗 Merge Rehost Output').item.json.blob_urls && $('🔗 Merge Rehost Output').item.json.blob_urls[0] && $('🔗 Merge Rehost Output').item.json.blob_urls[0].url) || $('🔗 Merge Rehost Output').item.json.final_image_url || '' }}",
+            "Estado": "Publicado",
             "IG_URL": "={{ $('🔗 IG: Get Permalink').item.json.permalink }}",
             "FB_URL": "={{ 'https://www.facebook.com/' + $('🌐 FB: Publish Photo').item.json.post_id }}",
             "Publicado_En": "={{ new Date().toISOString() }}",
-            "Publish_Status": "success",
-            "Estado": "Publicado"
-          }
-        }
+            "Publish_Status": "success"
+          },
+          "schema": [
+            {
+              "id": "Fecha",
+              "displayName": "Fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Tema",
+              "displayName": "Tema",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Tipo",
+              "displayName": "Tipo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Angulo",
+              "displayName": "Angulo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Plataformas",
+              "displayName": "Plataformas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Modelo_Imagen",
+              "displayName": "Modelo_Imagen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Imagen_URL",
+              "displayName": "Imagen_URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Estado",
+              "displayName": "Estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "IG_URL",
+              "displayName": "IG_URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "FB_URL",
+              "displayName": "FB_URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Publicado_En",
+              "displayName": "Publicado_En",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Publish_Status",
+              "displayName": "Publish_Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "operation": "append",
+        "resource": "sheet"
       },
       "id": "log-sheets",
       "name": "📊 Google Sheets Log",
@@ -1084,7 +1196,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ from: $env.YCLOUD_WHATSAPP_NUMBER, to: $('🔗 Merge Rehost Output').item.json.approval_number, type: 'text', text: { body: '✓ Publicado en Instagram y Facebook\n\nTema: ' + $('🔗 Merge Rehost Output').item.json.topic + '\nInstagram: ' + $('🔗 IG: Get Permalink').item.json.permalink + '\nFacebook: https://www.facebook.com/' + $('🌐 FB: Publish Photo').item.json.post_id + '\nHora: ' + new Date().toISOString() } }) }}",
+        "jsonBody": "={{ JSON.stringify({ from: $env.YCLOUD_WHATSAPP_NUMBER, to: $('🔗 Merge Rehost Output').item.json.approval_number, type: 'text', text: { body: '✓ Publicado en Instagram y Facebook\\n\\nTema: ' + $('🔗 Merge Rehost Output').item.json.topic + '\\nInstagram: ' + $('🔗 IG: Get Permalink').item.json.permalink + '\\nFacebook: https://www.facebook.com/' + $('🌐 FB: Publish Photo').item.json.post_id + '\\nHora: ' + new Date().toISOString() } }) }}",
         "options": {}
       },
       "id": "notify-wa-success",
