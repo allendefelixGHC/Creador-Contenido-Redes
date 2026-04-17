@@ -53,6 +53,11 @@ See [v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md) for full phase details.
 #### Phase 9: Error Hardening + Hashtags + Token Alerts
 
 - [ ] **Phase 9: Error Hardening + Hashtags + Token Alerts** — Error output branches on all Meta nodes, first-comment hashtag posting, OAuthException 190 alert, blob cleanup, failure logging
+  **Plans:** 3 plans
+  Plans:
+  - [ ] 09-01-PLAN.md — SAS regeneration (delete permission) + hashtag extraction + IG first-comment nodes
+  - [ ] 09-02-PLAN.md — Error handler subgraph: onError wiring + Parse Meta Error + WA alerts + Sheets fail log + blob cleanup
+  - [ ] 09-03-PLAN.md — Deploy to n8n-azure + E2E tests (happy path + error path + token expired + blob cleanup)
 
 ## Phase Details
 
@@ -129,7 +134,10 @@ See [v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md) for full phase details.
   3. Using an expired or revoked Meta token sends a specific WhatsApp alert: "Token Meta expirado — verificar que Susana sigue como admin de la pagina" (not a generic error)
   4. A publish failure creates a Google Sheets row with `Publish_Status=failed` and the error message — the audit trail is complete even when publishing does not succeed
   5. After a successful publish, the Azure Blob files for that post are deleted; after a confirmed failure, blobs are also cleaned up — no orphaned storage accumulates
-**Plans**: TBD
+**Plans**: 3 plans
+- [ ] 09-01-PLAN.md — SAS regeneration (delete permission) + hashtag extraction + IG first-comment nodes
+- [ ] 09-02-PLAN.md — Error handler subgraph: onError wiring + Parse Meta Error + WA alerts + Sheets fail log + blob cleanup
+- [ ] 09-03-PLAN.md — Deploy to n8n-azure + E2E tests (happy path + error path + token expired + blob cleanup)
 
 ## Progress
 
