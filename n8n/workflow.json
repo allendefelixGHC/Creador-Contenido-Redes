@@ -2093,7 +2093,7 @@
     {
       "parameters": {
         "jsCode": "const raw = $input.first().json;\nlet err = {};\ntry {\n  err = raw.error || {};\n  if (!err.code && raw.cause && raw.cause.response && raw.cause.response.body) {\n    const parsed = JSON.parse(raw.cause.response.body);\n    err = parsed.error || err;\n  }\n} catch(e) {}\n\n// Primary: Merge Rehost Output (structural guarantee: always runs before Meta calls)\n// Fallback: Prep Re-host Input (runs even earlier)\nlet mergeData = {};\ntry { mergeData = $('🔗 Merge Rehost Output').first().json; } catch(e) {\n  try { mergeData = $('🔧 Prep Re-host Input').first().json; } catch(e2) {}\n}\n\nreturn [{\n  json: {\n    error_code: err.code || 0,\n    error_message: err.message || 'Error desconocido de Meta API',\n    error_type: err.type || '',\n    fbtrace_id: err.fbtrace_id || '',\n    platform_failed: raw._platform || 'Meta',\n    is_token_expired: (err.type === 'OAuthException' && err.code === 190),\n    approval_number: mergeData.approval_number || '',\n    topic: mergeData.topic || '',\n    blob_urls: mergeData.blob_urls || [],\n  }\n}];",
-        "mode": "runOnceForEachItem"
+        "mode": "runOnceForAllItems"
       },
       "id": "parse-meta-error",
       "name": "🚨 Parse Meta Error",
