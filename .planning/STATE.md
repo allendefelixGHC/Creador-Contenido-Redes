@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-04-10)
 
 **Core value:** Generate complete social media posts (single or carousel) in one wizard run, with AI-generated images and WhatsApp preview — and now automatically publish to Instagram + Facebook after SI approval
-**Current focus:** v1.1 — Phase 8 Plan 01 complete (Scheduling Wizard + n8n gate); next is Phase 8 Plan 02 (deploy + E2E)
+**Current focus:** v1.1 — Phase 8 complete (Scheduling); next is Phase 9 (Error Hardening + Hashtags + Token Alerts)
 
 ## Current Position
 
 Milestone: v1.1 Automatic Publishing
-Phase: 8 of 9 (Scheduling) — Plan 01 COMPLETE 2026-04-17
-Next: Phase 8 Plan 02 (deploy to n8n-azure + E2E tests)
-Last activity: 2026-04-17 — Phase 8 Plan 01 complete. Wizard PASO 6 scheduling prompt (ahora/hoy HH:MM/manana HH:MM) + CET/CEST UTC conversion via Intl probe. n8n: 3 scheduling nodes added (Code guard + IF router + Wait), both Supabase saves updated with publish_at, node count 57→60. Commits 0f3f783→6d9718d.
+Phase: 8 of 9 (Scheduling) — COMPLETE 2026-04-17
+Next: Phase 9 (Error Hardening + Hashtags + Token Alerts)
+Last activity: 2026-04-17 — Phase 8 complete. Plan 01: Wizard PASO 6 + n8n scheduling gate (57→60 nodes). Plan 02: deployed to n8n-azure, 3 bugs fixed (missing $json, missing $input, publish_at pipeline passthrough). E2E: exec 133 immediate (FALSE path ✓), exec 139 scheduled wait_seconds=233 (TRUE+Wait path ✓), past-time rejection ✓. 3 FB test posts cleaned. Commits 0f3f783→b17f84f.
 
-Progress: [█████████░] ~85% (v1.1, 10/12 plans — Phase 4-8 Plan 01 complete) — [██████████] 100% (v1.0 complete)
+Progress: [█████████░] ~90% (v1.1, 11/12 plans — Phase 4-8 complete) — [██████████] 100% (v1.0 complete)
 
 ## Performance Metrics
 
@@ -38,6 +38,7 @@ Progress: [█████████░] ~85% (v1.1, 10/12 plans — Phase 4-8
 | 5. Instagram Single-Photo Publishing | 2 | **Complete** — Plans 01+02 done 2026-04-16; 2 live IG posts verified, 10 bugs fixed during deploy |
 | 6. Facebook Single-Photo Publishing | 2 | **Complete** — Plans 01+02 done 2026-04-17; 6 E2E tests, 3 bugs fixed (WA newlines, Sheets op, Sheets col order) |
 | 7. Carousel Publishing IG + FB | 3 | **Complete** — Plans 01+02+03 done 2026-04-17; 3 E2E tests pass, 1 bug fixed (wait 30→45s), 57 nodes deployed |
+| 8. Scheduling | 2 | **Complete** — Plans 01+02 done 2026-04-17; Wizard PASO 6 + n8n scheduling gate (60 nodes), 3 bugs fixed during E2E, immediate+scheduled paths verified |
 | 8. Scheduling | 2 | **Plan 01 COMPLETE** 2026-04-17 — Wizard PASO 6 + UTC conversion + n8n 3 scheduling nodes (60 nodes). Plan 02: deploy + E2E pending |
 
 **Plan execution history (v1.1):**
@@ -54,6 +55,8 @@ Progress: [█████████░] ~85% (v1.1, 10/12 plans — Phase 4-8
 | 07-01 | ~15 min (Task 1 pre-done by user, Task 2 auto) | 2/2 complete | 1 modified | 9cdd5fd (guard removed + format branch + carousel Supabase save) |
 | 07-02 | ~20 min | 2/2 complete | 1 modified | b097282 (IG carousel 7 nodes), 566e1f9 (FB+WA+Sheets 7 nodes) |
 | 07-03 | ~30 min (deploy + 3 E2E tests + 1 bug fix) | 2/2 complete | 1 modified | 3ff80d5 (deploy), 7ba3ae7 (wait 30→45s fix) |
+| 08-01 | ~20 min | 2/2 complete | 2 modified | 0f3f783 (Wizard PASO 6), 6d9718d (n8n scheduling gate) |
+| 08-02 | ~45 min (deploy + 4 E2E tests + 3 bug fixes) | 2/2 complete | 1 modified | 196a827 (deploy), b17f84f (3 fixes: $json, $input, publish_at passthrough) |
 | 08-01 | ~20 min | 2/2 complete | 2 modified | 0f3f783 (Wizard PASO 6 + UTC conversion), 6d9718d (n8n 3 scheduling nodes + Supabase saves) |
 
 ## Accumulated Context
@@ -104,6 +107,13 @@ Recent decisions relevant to v1.1:
 - [Phase 07 Plan 03]: Wait node bumped 30→45s after exec 117 failed with "Media ID is not available" (9007/2207027) — 30s insufficient for 5-slide child container processing
 - [Phase 07 Plan 03]: n8n API PUT requires stripped settings object (only executionOrder) — full workflow.json settings cause 400 "must NOT have additional properties"
 - [Phase 07 Plan 03]: Simultaneous briefs cause session collision in Supabase (last-write-wins) — E2E tests must be run sequentially, one brief at a time
+- [Phase 08 Plan 01]: Intl.DateTimeFormat probe-based offset detection for CET/CEST conversion — no external timezone library, handles DST automatically
+- [Phase 08 Plan 01]: Wait node uses "After Time Interval" (seconds), NOT "At Specified Time" — avoids documented n8n #14723 reliability bug
+- [Phase 08 Plan 01]: 65s minimum floor for Wait node — n8n does not persist Wait < 65s to DB; container restart loses sub-65s executions
+- [Phase 08 Plan 01]: Fan-in without Merge node — both Wait output and IF FALSE output wire directly to Prep Re-host Input
+- [Phase 08 Plan 02]: publish_at MUST be explicitly forwarded through Parsear contenido, Parsear prompts carrusel, and Collect Image URLs — webhook body fields are NOT auto-propagated through the pipeline
+- [Phase 08 Plan 02]: $input.first().json is mandatory in Code nodes with runOnceForAllItems mode — bare .first() is a syntax error in n8n sandbox
+- [Phase 08 Plan 02]: YCloud sends 'from' field WITH + prefix — simulated approvals must include + for Supabase match
 - [Phase 08 Plan 01]: Use Intl.DateTimeFormat probe-based offset detection for CET/CEST timezone conversion in Wizard — no external timezone library needed (Node.js 22 ships full IANA timezone database)
 - [Phase 08 Plan 01]: Wait node MUST use "After Time Interval" (seconds) mode, not "At Specified Time" — avoids n8n #14723 bug where ISO string input is interpreted as epoch seconds (55-year wait)
 - [Phase 08 Plan 01]: 65s minimum wait floor in Code guard — n8n does not persist Wait < 65s to DB; sub-65s scheduling routes to immediate
@@ -117,7 +127,7 @@ Recent decisions relevant to v1.1:
 
 ### Blockers/Concerns
 
-- **Phase 8 prerequisite:** `min-replicas=1` must be verified in Azure Container Apps BEFORE Phase 8 is tested — scale-to-zero kills Wait node executions silently
+- **Phase 8 prerequisite:** RESOLVED 2026-04-17 — `min-replicas=1` confirmed in Azure Container Apps `propulsar-n8n` (no change needed)
 - **Meta token lifetime:** Depends on Susana maintaining admin role on the Propulsar AI Facebook page
 - **Azure AllowBlobPublicAccess:** RESOLVED 2026-04-10 — storage account `propulsarcontent`, container `posts`, SAS `sp=cw sr=c se=2027-04-10`, smoke-tested PUT 201 + anonymous GET 200
 - **Plan 04-01 manual follow-up:** RESOLVED 2026-04-10 — orchestrator imported `n8n/subworkflow-rehost-images.json` via n8n public API, ID `BIaG266Q6AZpv4Sq` baked into main workflow.json in commit `23d195d`.
@@ -129,5 +139,5 @@ Recent decisions relevant to v1.1:
 ## Session Continuity
 
 Last session: 2026-04-17
-Stopped at: Phase 8 Plan 01 complete — Wizard PASO 6 + n8n scheduling gate (60 nodes). Next: Phase 8 Plan 02 (deploy to n8n-azure + E2E tests). Remember: verify min-replicas=1 before long-wait E2E tests.
-Resume file: .planning/phases/08-scheduling/08-01-SUMMARY.md
+Stopped at: Phase 8 complete — both plans done. Wizard PASO 6 scheduling + n8n scheduling gate (60 nodes). E2E verified: immediate (exec 133), scheduled (exec 139, wait 233s), past-time rejection. 3 bugs fixed during deploy. Next: Phase 9 (Error Hardening).
+Resume file: .planning/phases/08-scheduling/08-02-SUMMARY.md
