@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-04-10)
 
 **Core value:** Generate complete social media posts (single or carousel) in one wizard run, with AI-generated images and WhatsApp preview — and now automatically publish to Instagram + Facebook after SI approval
-**Current focus:** v1.1 — Phase 9 in progress (Error Hardening + Hashtags + Token Alerts); Plan 01 complete
+**Current focus:** v1.1 COMPLETE — Phase 9 done (Error Hardening + Hashtags + Token Alerts)
 
 ## Current Position
 
 Milestone: v1.1 Automatic Publishing
-Phase: 9 of 9 (Error Hardening + Hashtags + Token Alerts) — Plan 01 COMPLETE 2026-04-17
-Next: Phase 9 Plan 02 (error handler subgraph)
-Last activity: 2026-04-17 — Phase 9 Plan 01 complete. Azure SAS updated sp=rwdlc. 4 new nodes (hashtag extraction + IG comment). 64 nodes total. Commit 01c788f.
+Phase: 9 of 9 (Error Hardening + Hashtags + Token Alerts) — Plans 01+02 COMPLETE 2026-04-17
+Next: Deploy workflow.json to n8n Azure (PUT /api/v1/workflows) + E2E error path verification
+Last activity: 2026-04-17 — Phase 9 Plan 02 complete. 9 error handler nodes (Tag IG/FB Error, Parse Meta Error, IF Token Expirado, WA alerts x2, Sheets Fail Log, Extract Blob Names, Delete Azure Blob). All 12 Meta nodes onError=continueErrorOutput. Blob cleanup on success+fail paths. 73 nodes total. Commit e61db2f.
 
-Progress: [█████████░] ~92% (v1.1, 12/13 plans — Phase 4-9 Plan 01 complete) — [██████████] 100% (v1.0 complete)
+Progress: [██████████] 100% (v1.1, 13/13 plans complete) — [██████████] 100% (v1.0 complete)
 
 ## Performance Metrics
 
@@ -39,7 +39,7 @@ Progress: [█████████░] ~92% (v1.1, 12/13 plans — Phase 4-9
 | 6. Facebook Single-Photo Publishing | 2 | **Complete** — Plans 01+02 done 2026-04-17; 6 E2E tests, 3 bugs fixed (WA newlines, Sheets op, Sheets col order) |
 | 7. Carousel Publishing IG + FB | 3 | **Complete** — Plans 01+02+03 done 2026-04-17; 3 E2E tests pass, 1 bug fixed (wait 30→45s), 57 nodes deployed |
 | 8. Scheduling | 2 | **Complete** — Plans 01+02 done 2026-04-17; Wizard PASO 6 + n8n scheduling gate (60 nodes), 3 bugs fixed during E2E, immediate+scheduled paths verified |
-| 8. Scheduling | 2 | **Plan 01 COMPLETE** 2026-04-17 — Wizard PASO 6 + UTC conversion + n8n 3 scheduling nodes (60 nodes). Plan 02: deploy + E2E pending |
+| 9. Error Hardening + Hashtags + Token Alerts | 2 | **Complete** — Plans 01+02 done 2026-04-17; hashtag-as-comment (64 nodes), error handler subgraph (73 nodes), all 12 Meta nodes onError=continueErrorOutput, blob cleanup on success+fail |
 
 **Plan execution history (v1.1):**
 
@@ -59,6 +59,7 @@ Progress: [█████████░] ~92% (v1.1, 12/13 plans — Phase 4-9
 | 08-02 | ~45 min (deploy + 4 E2E tests + 3 bug fixes) | 2/2 complete | 1 modified | 196a827 (deploy), b17f84f (3 fixes: $json, $input, publish_at passthrough) |
 | 08-01 | ~20 min | 2/2 complete | 2 modified | 0f3f783 (Wizard PASO 6 + UTC conversion), 6d9718d (n8n 3 scheduling nodes + Supabase saves) |
 | 09-01 | ~35 min | 2/2 complete | 1 modified | 01c788f (4 new nodes: hashtag extraction + IG comment, 60→64 nodes) |
+| 09-02 | ~25 min | 1/1 complete | 2 modified/created | e61db2f (9 error handler nodes, onError wiring, blob cleanup, 64→73 nodes) |
 
 ## Accumulated Context
 
@@ -125,6 +126,9 @@ Recent decisions relevant to v1.1:
 - [Phase 09 Plan 01]: IG comment node uses onError=continueErrorOutput — post is already live when comment is attempted; comment failure must not abort a successful publish
 - [Phase 09 Plan 01]: Comment node URL uses explicit cross-ref ($('🚀 IG: media_publish').item.json.id) — avoids Set v3.0 fan-out silent data drop (same pattern as Phase 4)
 - [Phase 09 Plan 01]: Azure SAS updated to sp=rwdlc expiry 2027-04-10 — delete permission required for blob cleanup in Phase 9 Plan 02
+- [Phase 09]: Two platform-tagger Set nodes (Tag IG/FB Error) + single Parse Meta Error Code node — simpler than per-node handlers, _platform field identifies IG vs FB in WA alerts
+- [Phase 09]: Parse Meta Error cross-refs Merge Rehost Output (structural guarantee) with fallback to Prep Re-host Input — approval_number and topic always available in error handler
+- [Phase 09]: Extract Blob Names receives from 3 sources (success single, success carousel, fail) — single cleanup chain for all paths, cross-refs Merge Rehost Output when blob_urls not in item
 
 ### Pending Todos
 
@@ -145,5 +149,5 @@ Recent decisions relevant to v1.1:
 ## Session Continuity
 
 Last session: 2026-04-17
-Stopped at: Phase 9 Plan 01 complete — Azure SAS updated (sp=rwdlc), 4 new nodes added (hashtag extraction + IG comment), 64 nodes total. Commit 01c788f. Next: Phase 9 Plan 02 (error handler subgraph + blob cleanup).
-Resume file: .planning/phases/09-error-hardening-hashtags-token-alerts/09-01-SUMMARY.md
+Stopped at: Phase 9 Plan 02 complete — v1.1 roadmap COMPLETE. 9 error handler nodes added (73 total). All 12 Meta nodes onError=continueErrorOutput. Blob cleanup on success+fail. Commit e61db2f. Next: Deploy workflow.json to n8n Azure (PUT /api/v1/workflows/{id}) + E2E error path verification.
+Resume file: .planning/phases/09-error-hardening-hashtags-token-alerts/09-02-SUMMARY.md
