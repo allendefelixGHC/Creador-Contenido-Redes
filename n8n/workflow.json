@@ -2036,26 +2036,13 @@
     },
     {
       "parameters": {
-        "mode": "manual",
-        "duplicateItem": false,
-        "assignments": {
-          "assignments": [
-            {
-              "id": "tag-ig-platform",
-              "name": "_platform",
-              "type": "string",
-              "value": "Instagram"
-            }
-          ]
-        },
-        "options": {
-          "includeOtherFields": true
-        }
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Preserve all fields including 'error' (Set node drops 'error' key)\nconst item = { ...$input.item.json };\nitem._platform = 'Instagram';\nreturn { json: item };"
       },
       "id": "tag-ig-error",
       "name": "🏷️ Tag IG Error",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
         4500,
         900
@@ -2064,26 +2051,13 @@
     },
     {
       "parameters": {
-        "mode": "manual",
-        "duplicateItem": false,
-        "assignments": {
-          "assignments": [
-            {
-              "id": "tag-fb-platform",
-              "name": "_platform",
-              "type": "string",
-              "value": "Facebook"
-            }
-          ]
-        },
-        "options": {
-          "includeOtherFields": true
-        }
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Preserve all fields including 'error' (Set node drops 'error' key)\nconst item = { ...$input.item.json };\nitem._platform = 'Facebook';\nreturn { json: item };"
       },
       "id": "tag-fb-error",
       "name": "🏷️ Tag FB Error",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
         5500,
         900
@@ -2092,7 +2066,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const raw = $input.first().json;\nlet err = {};\ntry {\n  err = raw.error || {};\n  if (!err.code && raw.cause && raw.cause.response && raw.cause.response.body) {\n    const parsed = JSON.parse(raw.cause.response.body);\n    err = parsed.error || err;\n  }\n} catch(e) {}\n\n// Primary: Merge Rehost Output (structural guarantee: always runs before Meta calls)\n// Fallback: Prep Re-host Input (runs even earlier)\nlet mergeData = {};\ntry { mergeData = $('🔗 Merge Rehost Output').first().json; } catch(e) {\n  try { mergeData = $('🔧 Prep Re-host Input').first().json; } catch(e2) {}\n}\n\nreturn [{\n  json: {\n    error_code: err.code || 0,\n    error_message: err.message || 'Error desconocido de Meta API',\n    error_type: err.type || '',\n    fbtrace_id: err.fbtrace_id || '',\n    platform_failed: raw._platform || 'Meta',\n    is_token_expired: (err.type === 'OAuthException' && err.code === 190),\n    approval_number: mergeData.approval_number || '',\n    topic: mergeData.topic || '',\n    blob_urls: mergeData.blob_urls || [],\n  }\n}];",
+        "jsCode": "const raw = $input.first().json;\nlet err = {};\ntry {\n  const rawErr = raw.error || {};\n  if (rawErr.code && typeof rawErr.code === 'number') {\n    // Direct Meta error object with numeric code\n    err = rawErr;\n  } else if (rawErr.message) {\n    // AxiosError message format: \"400 - \\\"<json_encoded_string>\\\"\"\n    // The inner string is double-encoded JSON, need two-stage decode\n    const msg = rawErr.message;\n    // Find the outer JSON-encoded string (between first and last double-quote)\n    const qStart = msg.indexOf('\"');\n    const qEnd = msg.lastIndexOf('\"');\n    if (qStart !== -1 && qEnd > qStart) {\n      try {\n        // First decode: get the JSON string out of the quoted wrapper\n        const jsonStr = msg.slice(qStart, qEnd + 1);\n        const inner = JSON.parse(jsonStr);  // gives us the raw JSON text\n        const parsed = JSON.parse(inner);   // gives us the actual object\n        err = parsed.error || parsed;\n      } catch(e) {\n        // Fallback: try direct JSON extraction (first { to last })\n        const start = msg.indexOf('{');\n        const end = msg.lastIndexOf('}');\n        if (start !== -1 && end !== -1) {\n          try { const p = JSON.parse(msg.slice(start, end + 1)); err = p.error || p; } catch(e2) {}\n        }\n      }\n    }\n  }\n  // Fallback: raw.cause.response.body (alternate error shape)\n  if (!err.code && raw.cause && raw.cause.response && raw.cause.response.body) {\n    try { const p = JSON.parse(raw.cause.response.body); err = p.error || err; } catch(e) {}\n  }\n} catch(e) {}\n\n// Primary: Merge Rehost Output (structural guarantee: all Meta nodes downstream)\n// Fallback: Prep Re-host Input\nlet mergeData = {};\ntry { mergeData = $('🔗 Merge Rehost Output').first().json; } catch(e) {\n  try { mergeData = $('🔧 Prep Re-host Input').first().json; } catch(e2) {}\n}\n\nreturn [{\n  json: {\n    error_code: err.code || 0,\n    error_message: err.message || 'Error desconocido de Meta API',\n    error_type: err.type || '',\n    fbtrace_id: err.fbtrace_id || '',\n    platform_failed: raw._platform || 'Meta',\n    is_token_expired: (err.type === 'OAuthException' && err.code === 190),\n    approval_number: mergeData.approval_number || '',\n    topic: mergeData.topic || '',\n    blob_urls: mergeData.blob_urls || [],\n  }\n}];",
         "mode": "runOnceForAllItems"
       },
       "id": "parse-meta-error",
@@ -2208,10 +2182,10 @@
           "mappingMode": "defineBelow",
           "value": {
             "Fecha": "={{ new Date().toISOString() }}",
-            "Tema": "={{ $json.topic }}",
+            "Tema": "={{ $('🚨 Parse Meta Error').item.json.topic }}",
             "Tipo": "",
             "Angulo": "",
-            "Plataformas": "={{ $json.platform_failed }}",
+            "Plataformas": "={{ $('🚨 Parse Meta Error').item.json.platform_failed }}",
             "Modelo_Imagen": "",
             "Imagen_URL": "",
             "Estado": "Error",
@@ -2219,7 +2193,7 @@
             "FB_URL": "",
             "Publicado_En": "={{ new Date().toISOString() }}",
             "Publish_Status": "failed",
-            "Error_Msg": "={{ $json.error_message + \" [\" + $json.fbtrace_id + \"]\" }}"
+            "Error_Msg": "={{ $('🚨 Parse Meta Error').item.json.error_message + ' [' + $('🚨 Parse Meta Error').item.json.fbtrace_id + ']' }}"
           },
           "schema": [
             {
