@@ -86,6 +86,19 @@
     },
     {
       "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst igCaption = data.instagram?.caption || data.instagram_caption || '';\nconst lines = igCaption.split('\\n');\nconst hashtagLines = lines.filter(l => l.trim().startsWith('#'));\nconst cleanLines = lines.filter(l => !l.trim().startsWith('#'));\nconst cleanCaption = cleanLines.join('\\n').trimEnd();\nconst hashtagBlock = hashtagLines.join(' ').trim();\nreturn [{\n  json: {\n    ...data,\n    instagram: { ...(data.instagram || {}), caption: cleanCaption },\n    instagram_caption: cleanCaption,\n    hashtag_block: hashtagBlock,\n  }\n}];"
+      },
+      "id": "extract-hashtags-carousel",
+      "name": "✂️ Extract Hashtags (Carousel)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        976,
+        528
+      ]
+    },
+    {
+      "parameters": {
         "jsCode": "const data = $input.first().json;\nconst prompts = data.image_prompts;\n\nreturn prompts.map(slide => ({\n  json: {\n    slide_num:       slide.slide_num,\n    texto_overlay:   slide.texto_overlay,\n    prompt:          slide.prompt,\n    approval_number: data.approval_number,\n    num_images:      data.num_images,\n    topic:           data.topic,\n    type:            data.type,\n  }\n}));"
       },
       "id": "explode-carousel-slides",
@@ -177,6 +190,19 @@
       "typeVersion": 2,
       "position": [
         640,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst igCaption = data.instagram?.caption || data.instagram_caption || '';\nconst lines = igCaption.split('\\n');\nconst hashtagLines = lines.filter(l => l.trim().startsWith('#'));\nconst cleanLines = lines.filter(l => !l.trim().startsWith('#'));\nconst cleanCaption = cleanLines.join('\\n').trimEnd();\nconst hashtagBlock = hashtagLines.join(' ').trim();\nreturn [{\n  json: {\n    ...data,\n    instagram: { ...(data.instagram || {}), caption: cleanCaption },\n    instagram_caption: cleanCaption,\n    hashtag_block: hashtagBlock,\n  }\n}];"
+      },
+      "id": "extract-hashtags-single",
+      "name": "✂️ Extract Hashtags (Single)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        752,
         368
       ]
     },
@@ -614,7 +640,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Normalize both single-post and carousel briefs into the sub-workflow's expected input shape.\n// Single post: $json has final_image_url (string).\n// Carousel: $json has image_urls (array of strings) and num_images.\n//\n// Output shape for Execute Workflow:\n//   { image_urls: [{ index, url }], post_id, approval_number }\n\nconst data = $input.first().json;\nconst format = data.format || 'single';\n\nlet imageUrls = [];\nif (format === 'carousel' && Array.isArray(data.image_urls)) {\n  imageUrls = data.image_urls.map((url, i) => ({ index: i + 1, url }));\n} else if (data.final_image_url) {\n  imageUrls = [{ index: 1, url: data.final_image_url }];\n} else {\n  throw new Error('Prep Re-host Input: no image URL found on approved post (neither final_image_url nor image_urls)');\n}\n\n// post_id: derive from session/timestamp. Prefer an existing session_id if present (set by Recuperar sesion Supabase).\nconst postId = data.session_id || ('propulsar_' + Date.now());\n\nreturn [{\n  json: {\n    // Pass ALL upstream fields through so downstream nodes (Sheets Log, future Meta publish)\n    // still have access to topic, type, angle, instagram/facebook text, etc.\n    ...data,\n    // Plus the sub-workflow input fields:\n    image_urls: imageUrls,\n    post_id: postId,\n    approval_number: data.approval_number\n  }\n}];",
+        "jsCode": "// Normalize both single-post and carousel briefs into the sub-workflow's expected input shape.\n// Single post: $json has final_image_url (string).\n// Carousel: $json has image_urls (array of strings) and num_images.\n//\n// Output shape for Execute Workflow:\n//   { image_urls: [{ index, url }], post_id, approval_number }\n\nconst data = $input.first().json;\nconst format = data.format || 'single';\n\nlet imageUrls = [];\nif (format === 'carousel' && Array.isArray(data.image_urls)) {\n  imageUrls = data.image_urls.map((url, i) => ({ index: i + 1, url }));\n} else if (data.final_image_url) {\n  imageUrls = [{ index: 1, url: data.final_image_url }];\n} else {\n  throw new Error('Prep Re-host Input: no image URL found on approved post (neither final_image_url nor image_urls)');\n}\n\n// post_id: derive from session/timestamp. Prefer an existing session_id if present (set by Recuperar sesion Supabase).\nconst postId = data.session_id || ('propulsar_' + Date.now());\n\n// IGPUB-06: Re-extract hashtags from the stored instagram_caption (Supabase stores the original with hashtags).\n// The content-generation path runs extraction for WA preview display only; the approval path needs\n// hashtag_block derived here so it threads through Merge Rehost Output to the IG comment node.\nconst igCaption = data.instagram_caption || '';\nconst captionLines = igCaption.split('\\n');\nconst hashtagLines = captionLines.filter(l => l.trim().startsWith('#'));\nconst cleanLines = captionLines.filter(l => !l.trim().startsWith('#'));\nconst cleanCaption = cleanLines.join('\\n').trimEnd();\nconst hashtagBlock = hashtagLines.join(' ').trim();\n\nreturn [{\n  json: {\n    // Pass ALL upstream fields through so downstream nodes (Sheets Log, future Meta publish)\n    // still have access to topic, type, angle, instagram/facebook text, etc.\n    ...data,\n    // Clean caption (no hashtag lines) — used by IG Create Container\n    instagram_caption: cleanCaption,\n    // hashtag_block threaded to Merge Rehost Output → IG comment node\n    hashtag_block: hashtagBlock,\n    // Plus the sub-workflow input fields:\n    image_urls: imageUrls,\n    post_id: postId,\n    approval_number: data.approval_number\n  }\n}];",
         "mode": "runOnceForAllItems"
       },
       "id": "prep-rehost-input",
@@ -730,6 +756,12 @@
               "name": "approval_number",
               "type": "string",
               "value": "={{ $('🔧 Prep Re-host Input').item.json.approval_number }}"
+            },
+            {
+              "id": "merge-hashtag-block",
+              "name": "hashtag_block",
+              "type": "string",
+              "value": "={{ $('🔧 Prep Re-host Input').item.json.hashtag_block || '' }}"
             }
           ]
         },
@@ -963,7 +995,7 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.4,
       "position": [
-        5290,
+        5480,
         480
       ],
       "credentials": {
@@ -1168,7 +1200,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        4600,
+        4820,
         480
       ],
       "retryOnFail": true,
@@ -1176,6 +1208,29 @@
       "waitBetweenTries": 1000,
       "onError": "stopWorkflow",
       "notes": "GETs the published IG post's permalink (IGPUB-05). Input: { id: <media_id> } from media_publish. Output: { id, permalink }. Idempotent GET — retry is safe."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v22.0/{{ $('🚀 IG: media_publish').item.json.id }}/comments",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ message: $('🔗 Merge Rehost Output').item.json.hashtag_block, access_token: $env.META_PAGE_TOKEN }) }}",
+        "options": {}
+      },
+      "id": "ig-post-hashtag-comment",
+      "name": "💬 IG: Post Hashtag Comment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4600,
+        480
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000,
+      "onError": "continueErrorOutput",
+      "notes": "IGPUB-06: Posts hashtags as first comment on the published IG post. Non-blocking — if comment fails, post is already live. onError=continueErrorOutput so publish chain continues. URL uses explicit cross-ref to media_publish to avoid Set v3.0 fan-out data-drop. message = hashtag_block from Merge Rehost Output."
     },
     {
       "parameters": {
@@ -1204,7 +1259,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        5070,
+        5260,
         480
       ],
       "retryOnFail": true,
@@ -1240,7 +1295,7 @@
       "waitBetweenTries": 0,
       "onError": "stopWorkflow",
       "position": [
-        4820,
+        5040,
         480
       ],
       "notes": "CRITICAL: Retry DISABLED (FBPUB-01, ERR-02 equivalent). POST /{PAGE_ID}/photos is NOT idempotent — retry after timeout where Meta already processed creates a duplicate live FB post. Input: blob_urls[0].url from Merge Rehost Output. Output: { id: <photo_id>, post_id: '<page_id>_<photo_id>' }. Post_id used to construct FB_URL as 'https://www.facebook.com/' + post_id."
@@ -1551,8 +1606,31 @@
     },
     {
       "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v22.0/{{ $('🚀 IG: Carousel media_publish').item.json.id }}/comments",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ message: $('🔗 Merge Rehost Output').item.json.hashtag_block, access_token: $env.META_PAGE_TOKEN }) }}",
+        "options": {}
+      },
+      "id": "ig-post-carousel-hashtag-comment",
+      "name": "💬 IG: Post Carousel Hashtag Comment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5260,
+        200
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000,
+      "onError": "continueErrorOutput",
+      "notes": "IGPUB-06 (carousel): Posts hashtags as first comment on the published IG carousel. Non-blocking — if comment fails, post is already live. onError=continueErrorOutput so publish chain continues. URL uses explicit cross-ref to ig-carousel-media-publish to avoid fan-out data-drop."
+    },
+    {
+      "parameters": {
         "method": "GET",
-        "url": "=https://graph.facebook.com/v22.0/{{ $json.id }}",
+        "url": "=https://graph.facebook.com/v22.0/{{ $('🚀 IG: Carousel media_publish').item.json.id }}",
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
@@ -1573,7 +1651,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        5260,
+        5480,
         200
       ],
       "retryOnFail": true,
@@ -1592,7 +1670,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        5480,
+        5700,
         200
       ],
       "notes": "Explodes blob_urls from Merge Rehost Output into per-slide items for FB unpublished photo upload. Mirrors IG: Explode Carousel Slides but simpler (no count validation — already done in IG chain)."
@@ -1620,7 +1698,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        5700,
+        5920,
         200
       ],
       "retryOnFail": false,
@@ -1639,7 +1717,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        5920,
+        6140,
         200
       ],
       "notes": "Aggregates all FB unpublished photo IDs after fan-out. Validates count. Cross-refs Merge Rehost Output for session data and IG: Get Carousel Permalink for instagram_permalink. Output: single item with full context needed for Publish Feed + WA notification + Sheets log."
@@ -1654,7 +1732,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        6140,
+        6360,
         200
       ],
       "notes": "Builds the attached_media array required by /feed multi-photo POST. Format: [{ media_fbid: photo_id }, ...]. Passes through all session data for downstream nodes."
@@ -1682,7 +1760,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        6360,
+        6580,
         200
       ],
       "retryOnFail": false,
@@ -1718,7 +1796,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        6580,
+        6800,
         200
       ],
       "retryOnFail": true,
@@ -1874,7 +1952,7 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.4,
       "position": [
-        6800,
+        7020,
         200
       ],
       "credentials": {
@@ -1987,6 +2065,17 @@
       "main": [
         [
           {
+            "node": "✂️ Extract Hashtags (Carousel)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "✂️ Extract Hashtags (Carousel)": {
+      "main": [
+        [
+          {
             "node": "🎠 Explode Slides",
             "type": "main",
             "index": 0
@@ -2083,6 +2172,17 @@
       ]
     },
     "🔧 Parsear contenido": {
+      "main": [
+        [
+          {
+            "node": "✂️ Extract Hashtags (Single)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "✂️ Extract Hashtags (Single)": {
       "main": [
         [
           {
@@ -2401,6 +2501,17 @@
       "main": [
         [
           {
+            "node": "💬 IG: Post Carousel Hashtag Comment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "💬 IG: Post Carousel Hashtag Comment": {
+      "main": [
+        [
+          {
             "node": "🔗 IG: Get Carousel Permalink",
             "type": "main",
             "index": 0
@@ -2508,6 +2619,17 @@
       ]
     },
     "🚀 IG: media_publish": {
+      "main": [
+        [
+          {
+            "node": "💬 IG: Post Hashtag Comment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "💬 IG: Post Hashtag Comment": {
       "main": [
         [
           {
