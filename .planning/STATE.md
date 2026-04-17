@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-04-10)
 
 **Core value:** Generate complete social media posts (single or carousel) in one wizard run, with AI-generated images and WhatsApp preview — and now automatically publish to Instagram + Facebook after SI approval
-**Current focus:** v1.1 — Phase 7 complete (Plans 01+02+03); next is Phase 8 (Scheduling)
+**Current focus:** v1.1 — Phase 8 Plan 01 complete (Scheduling Wizard + n8n gate); next is Phase 8 Plan 02 (deploy + E2E)
 
 ## Current Position
 
 Milestone: v1.1 Automatic Publishing
-Phase: 7 of 9 (Carousel Publishing IG + FB) — COMPLETE 2026-04-17
-Next: Phase 8 (Scheduling)
-Last activity: 2026-04-17 — Phase 7 complete. Plan 01: Supabase schema + format branch + guard removal (40→43 nodes). Plan 02: IG 3-step + FB 2-step carousel chain (43→57 nodes). Plan 03: deployed to n8n-azure, 3 E2E tests pass (5-slide carousel, 3-slide carousel, single-post regression). Wait bumped 30→45s after media_publish race (exec 117). Commits 9cdd5fd→7ba3ae7.
+Phase: 8 of 9 (Scheduling) — Plan 01 COMPLETE 2026-04-17
+Next: Phase 8 Plan 02 (deploy to n8n-azure + E2E tests)
+Last activity: 2026-04-17 — Phase 8 Plan 01 complete. Wizard PASO 6 scheduling prompt (ahora/hoy HH:MM/manana HH:MM) + CET/CEST UTC conversion via Intl probe. n8n: 3 scheduling nodes added (Code guard + IF router + Wait), both Supabase saves updated with publish_at, node count 57→60. Commits 0f3f783→6d9718d.
 
-Progress: [████████░░] ~75% (v1.1, 9/12 plans — Phase 4-7 complete) — [██████████] 100% (v1.0 complete)
+Progress: [█████████░] ~85% (v1.1, 10/12 plans — Phase 4-8 Plan 01 complete) — [██████████] 100% (v1.0 complete)
 
 ## Performance Metrics
 
@@ -38,6 +38,7 @@ Progress: [████████░░] ~75% (v1.1, 9/12 plans — Phase 4-7 
 | 5. Instagram Single-Photo Publishing | 2 | **Complete** — Plans 01+02 done 2026-04-16; 2 live IG posts verified, 10 bugs fixed during deploy |
 | 6. Facebook Single-Photo Publishing | 2 | **Complete** — Plans 01+02 done 2026-04-17; 6 E2E tests, 3 bugs fixed (WA newlines, Sheets op, Sheets col order) |
 | 7. Carousel Publishing IG + FB | 3 | **Complete** — Plans 01+02+03 done 2026-04-17; 3 E2E tests pass, 1 bug fixed (wait 30→45s), 57 nodes deployed |
+| 8. Scheduling | 2 | **Plan 01 COMPLETE** 2026-04-17 — Wizard PASO 6 + UTC conversion + n8n 3 scheduling nodes (60 nodes). Plan 02: deploy + E2E pending |
 
 **Plan execution history (v1.1):**
 
@@ -53,6 +54,7 @@ Progress: [████████░░] ~75% (v1.1, 9/12 plans — Phase 4-7 
 | 07-01 | ~15 min (Task 1 pre-done by user, Task 2 auto) | 2/2 complete | 1 modified | 9cdd5fd (guard removed + format branch + carousel Supabase save) |
 | 07-02 | ~20 min | 2/2 complete | 1 modified | b097282 (IG carousel 7 nodes), 566e1f9 (FB+WA+Sheets 7 nodes) |
 | 07-03 | ~30 min (deploy + 3 E2E tests + 1 bug fix) | 2/2 complete | 1 modified | 3ff80d5 (deploy), 7ba3ae7 (wait 30→45s fix) |
+| 08-01 | ~20 min | 2/2 complete | 2 modified | 0f3f783 (Wizard PASO 6 + UTC conversion), 6d9718d (n8n 3 scheduling nodes + Supabase saves) |
 
 ## Accumulated Context
 
@@ -102,6 +104,11 @@ Recent decisions relevant to v1.1:
 - [Phase 07 Plan 03]: Wait node bumped 30→45s after exec 117 failed with "Media ID is not available" (9007/2207027) — 30s insufficient for 5-slide child container processing
 - [Phase 07 Plan 03]: n8n API PUT requires stripped settings object (only executionOrder) — full workflow.json settings cause 400 "must NOT have additional properties"
 - [Phase 07 Plan 03]: Simultaneous briefs cause session collision in Supabase (last-write-wins) — E2E tests must be run sequentially, one brief at a time
+- [Phase 08 Plan 01]: Use Intl.DateTimeFormat probe-based offset detection for CET/CEST timezone conversion in Wizard — no external timezone library needed (Node.js 22 ships full IANA timezone database)
+- [Phase 08 Plan 01]: Wait node MUST use "After Time Interval" (seconds) mode, not "At Specified Time" — avoids n8n #14723 bug where ISO string input is interpreted as epoch seconds (55-year wait)
+- [Phase 08 Plan 01]: 65s minimum wait floor in Code guard — n8n does not persist Wait < 65s to DB; sub-65s scheduling routes to immediate
+- [Phase 08 Plan 01]: Fan-in without Merge node — both Wait output and IF FALSE output wire directly to Prep Re-host Input; simpler than a Merge node, matches existing n8n fan-in patterns in this workflow
+- [Phase 08 Plan 01]: publish_at saved to Supabase in both session saves (single + carousel) — mandatory because WhatsApp approval fires in a separate webhook execution and needs to read publish_at from session
 
 ### Pending Todos
 
@@ -122,5 +129,5 @@ Recent decisions relevant to v1.1:
 ## Session Continuity
 
 Last session: 2026-04-17
-Stopped at: Phase 7 complete — all 3 plans done. E2E verified: 5-slide carousel, 3-slide carousel, single-post regression. 57 nodes deployed. Next: Phase 8 (Scheduling).
-Resume file: .planning/phases/07-carousel-publishing-ig-fb/07-03-SUMMARY.md
+Stopped at: Phase 8 Plan 01 complete — Wizard PASO 6 + n8n scheduling gate (60 nodes). Next: Phase 8 Plan 02 (deploy to n8n-azure + E2E tests). Remember: verify min-replicas=1 before long-wait E2E tests.
+Resume file: .planning/phases/08-scheduling/08-01-SUMMARY.md
