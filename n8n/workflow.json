@@ -614,16 +614,16 @@
               "value": "={{ $('🔧 Prep Re-host Input').item.json.image_model }}"
             },
             {
-              "id": "merge-instagram",
-              "name": "instagram",
-              "type": "object",
-              "value": "={{ $('🔧 Prep Re-host Input').item.json.instagram }}"
+              "id": "merge-instagram-caption",
+              "name": "instagram_caption",
+              "type": "string",
+              "value": "={{ $('🔧 Prep Re-host Input').item.json.instagram_caption }}"
             },
             {
-              "id": "merge-facebook",
-              "name": "facebook",
-              "type": "object",
-              "value": "={{ $('🔧 Prep Re-host Input').item.json.facebook }}"
+              "id": "merge-facebook-caption",
+              "name": "facebook_caption",
+              "type": "string",
+              "value": "={{ $('🔧 Prep Re-host Input').item.json.facebook_caption }}"
             },
             {
               "id": "merge-final-image",
