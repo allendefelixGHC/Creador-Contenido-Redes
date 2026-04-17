@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-04-10)
 ## Current Position
 
 Milestone: v1.1 Automatic Publishing
-Phase: 5 of 9 (Instagram Single-Photo Publishing) — COMPLETE 2026-04-16 (Plans 01+02)
-Next: Phase 6 (Facebook Single-Photo Publishing)
-Last activity: 2026-04-16 — Plan 05-02 executed: deployed workflow to n8n-azure (38→39 nodes after 10 bug fixes), ran E2E tests — 2 live IG posts published (exec 90: /p/DXNT9PRlxCf, exec 93: /p/DXNUaGHFx9O), 30s wait confirmed at 30.238s, media_publish retry-disabled proven structurally. Commits c75c34f→827af90.
+Phase: 6 of 9 (Facebook Single-Photo Publishing) — IN PROGRESS (Plan 01 complete)
+Next: Phase 6 Plan 02 (deploy FB publish chain to n8n-azure + E2E test)
+Last activity: 2026-04-17 — Plan 06-01 executed: added FB: Publish Photo node to workflow.json (39→40 nodes), rewired IG Get Permalink → FB Publish Photo → WA Notify chain, updated WA message to include both IG+FB URLs, updated Sheets FB_URL from empty to post_id expression. Commit a436122.
 
-Progress: [████░░░░░░] ~33% (v1.1, 4/12 plans — Phase 4 complete, Phase 5 complete) — [██████████] 100% (v1.0 complete)
+Progress: [█████░░░░░] ~42% (v1.1, 5/12 plans — Phase 4 complete, Phase 5 complete, Phase 6 Plan 01 complete) — [██████████] 100% (v1.0 complete)
 
 ## Performance Metrics
 
@@ -45,6 +45,7 @@ Progress: [████░░░░░░] ~33% (v1.1, 4/12 plans — Phase 4 co
 | 04-02 | ~3 min (Task 1) + ~30 min (Task 2 agent run, incl. 3 bug fixes) | 2/2 complete | 2 modified | 23d195d (Task 1, wire sub-workflow into main), TBD (Task 2 fixes to `subworkflow-rehost-images.json`) |
 | 05-01 | ~15 min | 1/1 complete | 1 modified | 81d66e6 (Task 1, IG publish chain + guard + columns) |
 | 05-02 | ~4h (multi-session, 10 bug fixes) | 3/3 complete | 1 modified (11 commits) | c75c34f→827af90 (10 workflow fixes); 2 live IG posts exec 90+93 |
+| 06-01 | ~8 min | 1/1 complete | 1 modified | a436122 (FB publish node + rewire + WA update + Sheets FB_URL) |
 
 ## Accumulated Context
 
@@ -79,6 +80,9 @@ Recent decisions relevant to v1.1:
 - [Phase 05 Plan 02]: Google Sheets node v4.4 requires documentId and sheetName in __rl object format — plain strings fail silently or throw parse errors
 - [Phase 05 Plan 02]: Test B (duplicate prevention) verified structurally (retryOnFail=false + single runData entry per exec) — forced-timeout empirical test deferred
 - [Phase 05 Plan 02]: Supabase session status never set to "consumed" after publish — duplicate risk if SI sent twice; deferred to Phase 9
+- [Phase 06 Plan 01]: FB: Publish Photo placed sequentially after IG: Get Permalink (not parallel) — avoids Set v3 fan-out cross-ref silent data drop pitfall from Phase 4
+- [Phase 06 Plan 01]: retryOnFail=false on FB: Publish Photo — POST /{PAGE_ID}/photos is not idempotent, retry creates duplicate live FB post (same pattern as IG media_publish)
+- [Phase 06 Plan 01]: FB URL constructed inline as 'https://www.facebook.com/' + post_id — /photos response includes post_id directly, no second GET needed
 
 ### Pending Todos
 
@@ -98,6 +102,6 @@ Recent decisions relevant to v1.1:
 
 ## Session Continuity
 
-Last session: 2026-04-16
-Stopped at: Completed 05-02-PLAN.md — Phase 5 E2E complete; 2 live IG posts, 30s wait proven, retry-disabled confirmed. Commits c75c34f→827af90. Next: Phase 6 (Facebook single-photo publishing). Verify Sheets logging empirically in Phase 6 first test run.
-Resume file: .planning/phases/05-instagram-single-photo-publishing/05-02-SUMMARY.md
+Last session: 2026-04-17
+Stopped at: Completed 06-01-PLAN.md — FB publish node added to workflow.json (39→40 nodes), chain rewired, WA+Sheets updated. Commit a436122. Next: Phase 6 Plan 02 (deploy to n8n-azure + E2E test).
+Resume file: .planning/phases/06-facebook-single-photo-publishing/06-01-SUMMARY.md
