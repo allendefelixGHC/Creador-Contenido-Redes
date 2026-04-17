@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-04-10)
 
 **Core value:** Generate complete social media posts (single or carousel) in one wizard run, with AI-generated images and WhatsApp preview — and now automatically publish to Instagram + Facebook after SI approval
-**Current focus:** v1.1 — Phase 8 complete (Scheduling); next is Phase 9 (Error Hardening + Hashtags + Token Alerts)
+**Current focus:** v1.1 — Phase 9 in progress (Error Hardening + Hashtags + Token Alerts); Plan 01 complete
 
 ## Current Position
 
 Milestone: v1.1 Automatic Publishing
-Phase: 8 of 9 (Scheduling) — COMPLETE 2026-04-17
-Next: Phase 9 (Error Hardening + Hashtags + Token Alerts)
-Last activity: 2026-04-17 — Phase 8 complete. Plan 01: Wizard PASO 6 + n8n scheduling gate (57→60 nodes). Plan 02: deployed to n8n-azure, 3 bugs fixed (missing $json, missing $input, publish_at pipeline passthrough). E2E: exec 133 immediate (FALSE path ✓), exec 139 scheduled wait_seconds=233 (TRUE+Wait path ✓), past-time rejection ✓. 3 FB test posts cleaned. Commits 0f3f783→b17f84f.
+Phase: 9 of 9 (Error Hardening + Hashtags + Token Alerts) — Plan 01 COMPLETE 2026-04-17
+Next: Phase 9 Plan 02 (error handler subgraph)
+Last activity: 2026-04-17 — Phase 9 Plan 01 complete. Azure SAS updated sp=rwdlc. 4 new nodes (hashtag extraction + IG comment). 64 nodes total. Commit 01c788f.
 
-Progress: [█████████░] ~90% (v1.1, 11/12 plans — Phase 4-8 complete) — [██████████] 100% (v1.0 complete)
+Progress: [█████████░] ~92% (v1.1, 12/13 plans — Phase 4-9 Plan 01 complete) — [██████████] 100% (v1.0 complete)
 
 ## Performance Metrics
 
@@ -58,6 +58,7 @@ Progress: [█████████░] ~90% (v1.1, 11/12 plans — Phase 4-8
 | 08-01 | ~20 min | 2/2 complete | 2 modified | 0f3f783 (Wizard PASO 6), 6d9718d (n8n scheduling gate) |
 | 08-02 | ~45 min (deploy + 4 E2E tests + 3 bug fixes) | 2/2 complete | 1 modified | 196a827 (deploy), b17f84f (3 fixes: $json, $input, publish_at passthrough) |
 | 08-01 | ~20 min | 2/2 complete | 2 modified | 0f3f783 (Wizard PASO 6 + UTC conversion), 6d9718d (n8n 3 scheduling nodes + Supabase saves) |
+| 09-01 | ~35 min | 2/2 complete | 1 modified | 01c788f (4 new nodes: hashtag extraction + IG comment, 60→64 nodes) |
 
 ## Accumulated Context
 
@@ -119,6 +120,11 @@ Recent decisions relevant to v1.1:
 - [Phase 08 Plan 01]: 65s minimum wait floor in Code guard — n8n does not persist Wait < 65s to DB; sub-65s scheduling routes to immediate
 - [Phase 08 Plan 01]: Fan-in without Merge node — both Wait output and IF FALSE output wire directly to Prep Re-host Input; simpler than a Merge node, matches existing n8n fan-in patterns in this workflow
 - [Phase 08 Plan 01]: publish_at saved to Supabase in both session saves (single + carousel) — mandatory because WhatsApp approval fires in a separate webhook execution and needs to read publish_at from session
+- [Phase 09 Plan 01]: Hashtag re-extraction in Prep Re-host Input (not Normalizar URL imagen) — Supabase stores the original caption with hashtags; approval path re-derives hashtag_block from stored instagram_caption
+- [Phase 09 Plan 01]: Early extraction nodes (content generation path) serve WA preview UX only — the approval path re-extraction in Prep Re-host Input is authoritative for what gets published
+- [Phase 09 Plan 01]: IG comment node uses onError=continueErrorOutput — post is already live when comment is attempted; comment failure must not abort a successful publish
+- [Phase 09 Plan 01]: Comment node URL uses explicit cross-ref ($('🚀 IG: media_publish').item.json.id) — avoids Set v3.0 fan-out silent data drop (same pattern as Phase 4)
+- [Phase 09 Plan 01]: Azure SAS updated to sp=rwdlc expiry 2027-04-10 — delete permission required for blob cleanup in Phase 9 Plan 02
 
 ### Pending Todos
 
@@ -139,5 +145,5 @@ Recent decisions relevant to v1.1:
 ## Session Continuity
 
 Last session: 2026-04-17
-Stopped at: Phase 8 complete — both plans done. Wizard PASO 6 scheduling + n8n scheduling gate (60 nodes). E2E verified: immediate (exec 133), scheduled (exec 139, wait 233s), past-time rejection. 3 bugs fixed during deploy. Next: Phase 9 (Error Hardening).
-Resume file: .planning/phases/08-scheduling/08-02-SUMMARY.md
+Stopped at: Phase 9 Plan 01 complete — Azure SAS updated (sp=rwdlc), 4 new nodes added (hashtag extraction + IG comment), 64 nodes total. Commit 01c788f. Next: Phase 9 Plan 02 (error handler subgraph + blob cleanup).
+Resume file: .planning/phases/09-error-hardening-hashtags-token-alerts/09-01-SUMMARY.md
