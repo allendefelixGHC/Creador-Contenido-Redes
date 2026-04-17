@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-04-10)
 
 **Core value:** Generate complete social media posts (single or carousel) in one wizard run, with AI-generated images and WhatsApp preview — and now automatically publish to Instagram + Facebook after SI approval
-**Current focus:** v1.1 — Phase 5 complete (Plans 01+02); next is Phase 6 (Facebook single-photo publishing)
+**Current focus:** v1.1 — Phase 6 Plan 02 in progress (Task 1 complete, awaiting human E2E verification)
 
 ## Current Position
 
 Milestone: v1.1 Automatic Publishing
-Phase: 6 of 9 (Facebook Single-Photo Publishing) — IN PROGRESS (Plan 01 complete)
-Next: Phase 6 Plan 02 (deploy FB publish chain to n8n-azure + E2E test)
-Last activity: 2026-04-17 — Plan 06-01 executed: added FB: Publish Photo node to workflow.json (39→40 nodes), rewired IG Get Permalink → FB Publish Photo → WA Notify chain, updated WA message to include both IG+FB URLs, updated Sheets FB_URL from empty to post_id expression. Commit a436122.
+Phase: 6 of 9 (Facebook Single-Photo Publishing) — IN PROGRESS (Plan 02 Task 1 complete, at checkpoint)
+Next: Phase 6 Plan 02 Task 2 — E2E test (human verifies FB post + WA notification + Sheets logging)
+Last activity: 2026-04-17 — Plan 06-02 Task 1: deployed 40-node workflow to n8n-azure (39→40 nodes, FB: Publish Photo node live). FACEBOOK_PAGE_ID=981931321668013 confirmed in Azure Container App. Pre-flight Page token check passed. Workflow Qql7mvYRxKBsPZ5t active=true. No code changes — deploy-only task.
 
 Progress: [█████░░░░░] ~42% (v1.1, 5/12 plans — Phase 4 complete, Phase 5 complete, Phase 6 Plan 01 complete) — [██████████] 100% (v1.0 complete)
 
@@ -103,5 +103,5 @@ Recent decisions relevant to v1.1:
 ## Session Continuity
 
 Last session: 2026-04-17
-Stopped at: Completed 06-01-PLAN.md — FB publish node added to workflow.json (39→40 nodes), chain rewired, WA+Sheets updated. Commit a436122. Next: Phase 6 Plan 02 (deploy to n8n-azure + E2E test).
-Resume file: .planning/phases/06-facebook-single-photo-publishing/06-01-SUMMARY.md
+Stopped at: Phase 6 Plan 02 Task 1 complete — workflow deployed to n8n-azure (40 nodes, active). At checkpoint:human-verify for Task 2 (E2E test). Resume from Task 2 after human verifies FB publish + WA notification + Sheets logging.
+Resume file: .planning/phases/06-facebook-single-photo-publishing/06-02-PLAN.md (Task 2)
