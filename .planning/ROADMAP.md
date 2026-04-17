@@ -45,6 +45,10 @@ See [v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md) for full phase details.
 #### Phase 8: Scheduling
 
 - [ ] **Phase 8: Scheduling** — Wizard publish-time prompt + CET/CEST → UTC conversion + n8n Wait node gate; past-time guard in both Wizard and n8n
+  **Plans:** 2 plans
+  Plans:
+  - [ ] 08-01-PLAN.md — Wizard scheduling prompt (PASO 6) + UTC conversion + n8n scheduling gate (3 nodes) + Supabase publish_at
+  - [ ] 08-02-PLAN.md — Deploy to n8n-azure + Azure min-replicas check + E2E tests (immediate + scheduled + past-time guard)
 
 #### Phase 9: Error Hardening + Hashtags + Token Alerts
 
@@ -111,7 +115,9 @@ See [v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md) for full phase details.
   3. Entering a time that is already in the past triggers a Wizard warning and forces the user to choose "ahora" or enter a future time — the brief is never sent with a past timestamp
   4. If a past timestamp somehow reaches n8n, the Code node guard before the Wait node reroutes to immediate publishing — the execution does not hang
   5. Verifying `min-replicas=1` in Azure Container Apps is confirmed as a prerequisite before this phase is tested; a 2-minute-ahead scheduled post survives container idle state
-**Plans**: TBD
+**Plans**: 2 plans
+- [ ] 08-01-PLAN.md — Wizard scheduling prompt (PASO 6) + UTC conversion + n8n scheduling gate (3 nodes) + Supabase publish_at
+- [ ] 08-02-PLAN.md — Deploy to n8n-azure + Azure min-replicas check + E2E tests (immediate + scheduled + past-time guard)
 
 ### Phase 9: Error Hardening + Hashtags + Token Alerts
 **Goal**: All Meta API failures surface to the user via WhatsApp with actionable details, hashtags post as first comments, expired tokens are detected immediately, and orphaned blobs are cleaned up
@@ -136,5 +142,5 @@ See [v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md) for full phase details.
 | 5. Instagram Single-Photo Publishing | v1.1 | 2/2 | Complete | 2026-04-16 |
 | 6. Facebook Single-Photo Publishing | v1.1 | 2/2 | Complete | 2026-04-17 |
 | 7. Carousel Publishing (IG + FB) | v1.1 | 0/3 | Not started | - |
-| 8. Scheduling | v1.1 | 0/? | Not started | - |
+| 8. Scheduling | v1.1 | 0/2 | Not started | - |
 | 9. Error Hardening + Hashtags + Token Alerts | v1.1 | 0/? | Not started | - |
