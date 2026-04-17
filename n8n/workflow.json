@@ -329,10 +329,22 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey", "value": "={{ $env.SUPABASE_ANON_KEY }}" },
-            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_ANON_KEY }}" },
-            { "name": "Content-Type", "value": "application/json" },
-            { "name": "Prefer", "value": "return=representation" }
+            {
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_ANON_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.SUPABASE_ANON_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
           ]
         },
         "sendBody": true,
@@ -362,17 +374,72 @@
         "duplicateItem": false,
         "assignments": {
           "assignments": [
-            { "id": "a1", "name": "topic", "type": "string", "value": "={{ $('🔗 Normalizar URL imagen').item.json.topic }}" },
-            { "id": "a2", "name": "type", "type": "string", "value": "={{ $('🔗 Normalizar URL imagen').item.json.type }}" },
-            { "id": "a3", "name": "angle", "type": "string", "value": "={{ $('🔗 Normalizar URL imagen').item.json.angle || '' }}" },
-            { "id": "a4", "name": "platforms", "type": "array", "value": "={{ $('🔗 Normalizar URL imagen').item.json.platforms }}" },
-            { "id": "a5", "name": "image_model", "type": "string", "value": "={{ $('🔗 Normalizar URL imagen').item.json.image_model }}" },
-            { "id": "a6", "name": "final_image_url", "type": "string", "value": "={{ $('🔗 Normalizar URL imagen').item.json.final_image_url }}" },
-            { "id": "a7", "name": "approval_number", "type": "string", "value": "={{ $('🔗 Normalizar URL imagen').item.json.approval_number }}" },
-            { "id": "a8", "name": "instagram", "type": "object", "value": "={{ $('🔗 Normalizar URL imagen').item.json.instagram }}" },
-            { "id": "a9", "name": "facebook", "type": "object", "value": "={{ $('🔗 Normalizar URL imagen').item.json.facebook }}" },
-            { "id": "a10", "name": "session_id", "type": "string", "value": "={{ $json.session_id }}" },
-            { "id": "a11", "name": "supabase_row_id", "type": "string", "value": "={{ $json.id }}" }
+            {
+              "id": "a1",
+              "name": "topic",
+              "type": "string",
+              "value": "={{ $('🔗 Normalizar URL imagen').item.json.topic }}"
+            },
+            {
+              "id": "a2",
+              "name": "type",
+              "type": "string",
+              "value": "={{ $('🔗 Normalizar URL imagen').item.json.type }}"
+            },
+            {
+              "id": "a3",
+              "name": "angle",
+              "type": "string",
+              "value": "={{ $('🔗 Normalizar URL imagen').item.json.angle || '' }}"
+            },
+            {
+              "id": "a4",
+              "name": "platforms",
+              "type": "array",
+              "value": "={{ $('🔗 Normalizar URL imagen').item.json.platforms }}"
+            },
+            {
+              "id": "a5",
+              "name": "image_model",
+              "type": "string",
+              "value": "={{ $('🔗 Normalizar URL imagen').item.json.image_model }}"
+            },
+            {
+              "id": "a6",
+              "name": "final_image_url",
+              "type": "string",
+              "value": "={{ $('🔗 Normalizar URL imagen').item.json.final_image_url }}"
+            },
+            {
+              "id": "a7",
+              "name": "approval_number",
+              "type": "string",
+              "value": "={{ $('🔗 Normalizar URL imagen').item.json.approval_number }}"
+            },
+            {
+              "id": "a8",
+              "name": "instagram",
+              "type": "object",
+              "value": "={{ $('🔗 Normalizar URL imagen').item.json.instagram }}"
+            },
+            {
+              "id": "a9",
+              "name": "facebook",
+              "type": "object",
+              "value": "={{ $('🔗 Normalizar URL imagen').item.json.facebook }}"
+            },
+            {
+              "id": "a10",
+              "name": "session_id",
+              "type": "string",
+              "value": "={{ $json.session_id }}"
+            },
+            {
+              "id": "a11",
+              "name": "supabase_row_id",
+              "type": "string",
+              "value": "={{ $json.id }}"
+            }
           ]
         },
         "includeOtherFields": false,
@@ -492,18 +559,39 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey", "value": "={{ $env.SUPABASE_ANON_KEY }}" },
-            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_ANON_KEY }}" },
-            { "name": "Accept", "value": "application/vnd.pgrst.object+json" }
+            {
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_ANON_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.SUPABASE_ANON_KEY }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.pgrst.object+json"
+            }
           ]
         },
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
-            { "name": "approval_number", "value": "=eq.{{ $json.body.whatsappInboundMessage.from }}" },
-            { "name": "status", "value": "eq.pending" },
-            { "name": "order", "value": "created_at.desc" },
-            { "name": "limit", "value": "1" }
+            {
+              "name": "approval_number",
+              "value": "=eq.{{ $json.body.whatsappInboundMessage.from }}"
+            },
+            {
+              "name": "status",
+              "value": "eq.pending"
+            },
+            {
+              "name": "order",
+              "value": "created_at.desc"
+            },
+            {
+              "name": "limit",
+              "value": "1"
+            }
           ]
         },
         "options": {
@@ -751,7 +839,7 @@
             "Modelo_Imagen": "={{ $('🔗 Merge Rehost Output').item.json.image_model }}",
             "Imagen_URL": "={{ ($('🔗 Merge Rehost Output').item.json.blob_urls && $('🔗 Merge Rehost Output').item.json.blob_urls[0] && $('🔗 Merge Rehost Output').item.json.blob_urls[0].url) || $('🔗 Merge Rehost Output').item.json.final_image_url || '' }}",
             "IG_URL": "={{ $('🔗 IG: Get Permalink').item.json.permalink }}",
-            "FB_URL": "",
+            "FB_URL": "={{ 'https://www.facebook.com/' + $('🌐 FB: Publish Photo').item.json.post_id }}",
             "Publicado_En": "={{ new Date().toISOString() }}",
             "Publish_Status": "success",
             "Estado": "Publicado"
@@ -763,7 +851,7 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.4,
       "position": [
-        4820,
+        5070,
         380
       ],
       "credentials": {
@@ -872,7 +960,10 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -884,7 +975,10 @@
       "name": "📤 IG: Create Container",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [3720, 380],
+      "position": [
+        3720,
+        380
+      ],
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 2000,
@@ -900,7 +994,10 @@
       "name": "⏳ Wait 30s (container ready)",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1,
-      "position": [3940, 380],
+      "position": [
+        3940,
+        380
+      ],
       "notes": "Fixed 30s wait per IGPUB-03. Container typically reaches FINISHED in 2-5s for single photos, but 30s gives a safe margin. Phase 5 Success Criterion 5 requires this gap be visible in execution trace. Polling (HARD-03) deferred to v2."
     },
     {
@@ -910,7 +1007,10 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -922,7 +1022,10 @@
       "name": "🚀 IG: media_publish",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [4160, 380],
+      "position": [
+        4160,
+        380
+      ],
       "retryOnFail": false,
       "maxTries": 1,
       "waitBetweenTries": 0,
@@ -936,8 +1039,14 @@
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
-            { "name": "fields", "value": "permalink" },
-            { "name": "access_token", "value": "={{ $env.META_PAGE_TOKEN }}" }
+            {
+              "name": "fields",
+              "value": "permalink"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $env.META_PAGE_TOKEN }}"
+            }
           ]
         },
         "options": {}
@@ -946,7 +1055,10 @@
       "name": "🔗 IG: Get Permalink",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [4380, 380],
+      "position": [
+        4380,
+        380
+      ],
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 1000,
@@ -960,25 +1072,66 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "X-API-Key", "value": "={{ $env.YCLOUD_API_KEY }}" },
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "X-API-Key",
+              "value": "={{ $env.YCLOUD_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ from: $env.YCLOUD_WHATSAPP_NUMBER, to: $('🔗 Merge Rehost Output').item.json.approval_number, type: 'text', text: { body: '✓ Publicado en Instagram\\n\\nTema: ' + $('🔗 Merge Rehost Output').item.json.topic + '\\nURL: ' + $json.permalink + '\\nHora: ' + new Date().toISOString() } }) }}",
+        "jsonBody": "={{ JSON.stringify({ from: $env.YCLOUD_WHATSAPP_NUMBER, to: $('🔗 Merge Rehost Output').item.json.approval_number, type: 'text', text: { body: '✓ Publicado en Instagram y Facebook\n\nTema: ' + $('🔗 Merge Rehost Output').item.json.topic + '\nInstagram: ' + $('🔗 IG: Get Permalink').item.json.permalink + '\nFacebook: https://www.facebook.com/' + $('🌐 FB: Publish Photo').item.json.post_id + '\nHora: ' + new Date().toISOString() } }) }}",
         "options": {}
       },
       "id": "notify-wa-success",
       "name": "✅ Notify WhatsApp Success",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [4600, 380],
+      "position": [
+        4850,
+        380
+      ],
       "retryOnFail": true,
       "maxTries": 2,
       "waitBetweenTries": 2000,
       "onError": "stopWorkflow",
       "notes": "Sends WhatsApp text with 'Publicado' + IG permalink + timestamp (NOTIF-01). Cross-refs Merge Rehost Output for topic + approval_number because $json at this point is { id, permalink } from the permalink GET. Uses JSON.stringify({...}) wrapper per project pattern from commit effab36 to avoid quote-escaping issues."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v22.0/{{ $env.FACEBOOK_PAGE_ID }}/photos",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ url: $('🔗 Merge Rehost Output').item.json.blob_urls[0].url, message: $('🔗 Merge Rehost Output').item.json.facebook_caption || $('🔗 Merge Rehost Output').item.json.instagram_caption || '', access_token: $env.META_PAGE_TOKEN }) }}",
+        "options": {}
+      },
+      "id": "fb-publish-photo",
+      "name": "🌐 FB: Publish Photo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": false,
+      "maxTries": 1,
+      "waitBetweenTries": 0,
+      "onError": "stopWorkflow",
+      "position": [
+        4600,
+        380
+      ],
+      "notes": "CRITICAL: Retry DISABLED (FBPUB-01, ERR-02 equivalent). POST /{PAGE_ID}/photos is NOT idempotent — retry after timeout where Meta already processed creates a duplicate live FB post. Input: blob_urls[0].url from Merge Rehost Output. Output: { id: <photo_id>, post_id: '<page_id>_<photo_id>' }. Post_id used to construct FB_URL as 'https://www.facebook.com/' + post_id."
     }
   ],
   "connections": {
@@ -1383,7 +1536,7 @@
       "main": [
         [
           {
-            "node": "✅ Notify WhatsApp Success",
+            "node": "🌐 FB: Publish Photo",
             "type": "main",
             "index": 0
           }
@@ -1395,6 +1548,17 @@
         [
           {
             "node": "📊 Google Sheets Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🌐 FB: Publish Photo": {
+      "main": [
+        [
+          {
+            "node": "✅ Notify WhatsApp Success",
             "type": "main",
             "index": 0
           }
