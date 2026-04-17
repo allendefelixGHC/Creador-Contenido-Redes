@@ -18,3 +18,25 @@
 **Archive:** [v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md) | [v1.0-REQUIREMENTS.md](milestones/v1.0-REQUIREMENTS.md)
 
 ---
+
+## v1.1 Automatic Publishing (Shipped: 2026-04-17)
+
+**Phases:** 6 (4-9) | **Plans:** 14 | **Commits:** 74 | **Timeline:** 2026-04-10 → 2026-04-17 (7 days)
+
+**Delivered:** Full automated publishing pipeline — after WhatsApp SI approval, single posts and carousels publish automatically to Instagram + Facebook via Meta Graph API, with CET/CEST scheduling, Azure Blob re-hosting, error handling with WhatsApp alerts, and blob cleanup.
+
+**Key accomplishments:**
+1. Azure Blob re-hosting sub-workflow: ephemeral Ideogram/FAL URLs → permanent public Azure Blob URLs (no SAS for reads)
+2. Instagram single-photo + carousel publishing via Meta Graph API (2-step single, 3-step carousel with 45s container wait)
+3. Facebook single-photo + carousel publishing via attached_media pattern, combined IG+FB WhatsApp success notification
+4. Scheduling system: Wizard PASO 6 (CET/CEST → UTC), n8n Wait node with 65s minimum floor and past-time guard
+5. Hashtags as first IG comment (caption stays clean), automatic extraction from GPT-4o captions
+6. 9-node error handler: Meta error code/fbtrace_id extraction, token-expired WA alert (mentions Susana), Sheets fail log, Azure blob cleanup
+7. 73-node n8n workflow deployed to Azure Container Apps, 24 bugs fixed during E2E testing across 6 phases
+
+**Known gap:** `instagram_manage_comments` scope missing from Meta token — hashtag comments blocked until Susana regenerates token.
+
+**Archive:** [v1.1-ROADMAP.md](milestones/v1.1-ROADMAP.md) | [v1.1-REQUIREMENTS.md](milestones/v1.1-REQUIREMENTS.md)
+
+---
+
