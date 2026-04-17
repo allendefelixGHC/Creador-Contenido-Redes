@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-04-10)
 
 **Core value:** Generate complete social media posts (single or carousel) in one wizard run, with AI-generated images and WhatsApp preview — and now automatically publish to Instagram + Facebook after SI approval
-**Current focus:** v1.1 — Phase 5 Plan 01 complete; next is Phase 5 Plan 02 (deploy + E2E test)
+**Current focus:** v1.1 — Phase 5 complete (Plans 01+02); next is Phase 6 (Facebook single-photo publishing)
 
 ## Current Position
 
 Milestone: v1.1 Automatic Publishing
-Phase: 5 of 9 (Instagram Single-Photo Publishing) — Plan 01 COMPLETE 2026-04-16
-Next: Phase 5 Plan 02 (deploy workflow to n8n-azure + E2E test)
-Last activity: 2026-04-16 — Plan 05-01 executed: 5-node IG publish chain inserted in main workflow (Create Container, Wait 30s, media_publish retry=false, Get Permalink, Notify WA Success), Sheets Log repositioned and columns updated, carousel guard added. Commit 81d66e6.
+Phase: 5 of 9 (Instagram Single-Photo Publishing) — COMPLETE 2026-04-16 (Plans 01+02)
+Next: Phase 6 (Facebook Single-Photo Publishing)
+Last activity: 2026-04-16 — Plan 05-02 executed: deployed workflow to n8n-azure (38→39 nodes after 10 bug fixes), ran E2E tests — 2 live IG posts published (exec 90: /p/DXNT9PRlxCf, exec 93: /p/DXNUaGHFx9O), 30s wait confirmed at 30.238s, media_publish retry-disabled proven structurally. Commits c75c34f→827af90.
 
-Progress: [███░░░░░░░] ~25% (v1.1, 3/12 plans — Phase 4 complete, Phase 5 Plan 01 complete) — [██████████] 100% (v1.0 complete)
+Progress: [████░░░░░░] ~33% (v1.1, 4/12 plans — Phase 4 complete, Phase 5 complete) — [██████████] 100% (v1.0 complete)
 
 ## Performance Metrics
 
@@ -35,7 +35,7 @@ Progress: [███░░░░░░░] ~25% (v1.1, 3/12 plans — Phase 4 co
 | Phase | Plans | Status |
 |-------|-------|--------|
 | 4. Azure Blob Re-hosting | 2 | **Complete** — Plan 01 + Plan 02 (Task 1 + Task 2) all green; Tests A/B/C PASS 2026-04-16 |
-| 5. Instagram Single-Photo Publishing | 2 | Plan 01 complete 2026-04-16; Plan 02 (deploy + E2E) pending |
+| 5. Instagram Single-Photo Publishing | 2 | **Complete** — Plans 01+02 done 2026-04-16; 2 live IG posts verified, 10 bugs fixed during deploy |
 
 **Plan execution history (v1.1):**
 
@@ -44,6 +44,7 @@ Progress: [███░░░░░░░] ~25% (v1.1, 3/12 plans — Phase 4 co
 | 04-01 | ~4 min | 2 | 1 created | d41167d (Task 1, Azure pre-resolved), 052d129 (Task 2, sub-workflow JSON) |
 | 04-02 | ~3 min (Task 1) + ~30 min (Task 2 agent run, incl. 3 bug fixes) | 2/2 complete | 2 modified | 23d195d (Task 1, wire sub-workflow into main), TBD (Task 2 fixes to `subworkflow-rehost-images.json`) |
 | 05-01 | ~15 min | 1/1 complete | 1 modified | 81d66e6 (Task 1, IG publish chain + guard + columns) |
+| 05-02 | ~4h (multi-session, 10 bug fixes) | 3/3 complete | 1 modified (11 commits) | c75c34f→827af90 (10 workflow fixes); 2 live IG posts exec 90+93 |
 
 ## Accumulated Context
 
@@ -70,10 +71,19 @@ Recent decisions relevant to v1.1:
 - [Phase 05 Plan 01]: FB_URL declared as empty string in Sheets Log to lock column order; Phase 6 only changes the expression value, not the column structure.
 - [Phase 05 Plan 01]: carousel guard added to Prep Re-host Input — throws for format=carousel. Phase 7 removes this guard when carousel publish ships.
 - [Phase 05 Plan 01]: media_publish node has retryOnFail=false, maxTries=1 — it is the ONLY node in the workflow with retry explicitly disabled. This is the duplicate-post defense (IGPUB-04/ERR-02).
+- [Phase 05 Plan 02]: graph.facebook.com required for all Meta API calls — Page tokens rejected by graph.instagram.com (401)
+- [Phase 05 Plan 02]: YCloud inbound webhook must be explicitly pointed at the active approval workflow — silent failure if pointed at wrong workflow (chatbot)
+- [Phase 05 Plan 02]: Supabase INSERT node is mandatory before WA preview send — approval gate is non-functional without a session to look up
+- [Phase 05 Plan 02]: n8n Code node sandbox blocks require(), fetch(), and $helpers — use HTTP Request nodes for any external calls from within workflows
+- [Phase 05 Plan 02]: Execute Workflow typeVersion must be 1.2 with mode:list + cachedResultName for __rl workflow references in n8n 2.14.2
+- [Phase 05 Plan 02]: Google Sheets node v4.4 requires documentId and sheetName in __rl object format — plain strings fail silently or throw parse errors
+- [Phase 05 Plan 02]: Test B (duplicate prevention) verified structurally (retryOnFail=false + single runData entry per exec) — forced-timeout empirical test deferred
+- [Phase 05 Plan 02]: Supabase session status never set to "consumed" after publish — duplicate risk if SI sent twice; deferred to Phase 9
 
 ### Pending Todos
 
-- Commit the 3 sub-workflow bug fixes in `n8n/subworkflow-rehost-images.json` (agent made the edits during Task 2 execution; uncommitted).
+- Verify Google Sheets row logging empirically at the start of Phase 6 (config correct after 827af90 but no execution completed with that fix in place)
+- Address Supabase session status update (set to "consumed" after publish) — deferred to Phase 9
 
 ### Blockers/Concerns
 
@@ -83,9 +93,11 @@ Recent decisions relevant to v1.1:
 - **Plan 04-01 manual follow-up:** RESOLVED 2026-04-10 — orchestrator imported `n8n/subworkflow-rehost-images.json` via n8n public API, ID `BIaG266Q6AZpv4Sq` baked into main workflow.json in commit `23d195d`.
 - **Plan 04-02 human-verify checkpoint (Task 2):** RESOLVED 2026-04-16 — agent executed Tests A+B+C end-to-end via direct sub-workflow invocation (temp test branch inserted into main, tests run, branch removed). All 3 tests PASS. 3 pre-existing bugs in the sub-workflow were discovered and patched during execution (see Deviations in 04-02-SUMMARY.md).
 - **Supabase session schema gap:** The `content_sessions` table lacks `format` and `image_urls` columns, so the end-to-end approval flow (main webhook -> Supabase insert -> WA preview -> SI reply -> resumption -> re-host) only works for single-post. Carousel flow needs a schema extension before a publishing phase can run carousels end-to-end. This did not block Phase 4 verification (agent bypassed via direct sub-workflow invocation) but is now a known concern for Phases 5-7.
+- **Phase 05 Plan 02 E2E:** RESOLVED 2026-04-16 — 10 bugs fixed during deployment, 2 live IG posts published (exec 90: /p/DXNT9PRlxCf, exec 93: /p/DXNUaGHFx9O), 30s wait confirmed at 30.238s, retry-disabled proven structurally. Google Sheets row logging config correct after 827af90 but not empirically confirmed — verify at Phase 6 start.
+- **Supabase session status not consumed after publish:** KNOWN GAP — session stays "pending" after publish. Deferred to Phase 9 (error handling). Low risk in practice (WA previews are one-off interactions).
 
 ## Session Continuity
 
 Last session: 2026-04-16
-Stopped at: Completed 05-01-PLAN.md — IG publish chain added, all 13 verification checks pass, commit 81d66e6. Next: Plan 05-02 (deploy to n8n-azure + E2E test). Before 05-02: Felix must add 4 new columns to Google Sheet (IG_URL, FB_URL, Publicado_En, Publish_Status).
-Resume file: .planning/phases/05-instagram-single-photo-publishing/05-01-SUMMARY.md
+Stopped at: Completed 05-02-PLAN.md — Phase 5 E2E complete; 2 live IG posts, 30s wait proven, retry-disabled confirmed. Commits c75c34f→827af90. Next: Phase 6 (Facebook single-photo publishing). Verify Sheets logging empirically in Phase 6 first test run.
+Resume file: .planning/phases/05-instagram-single-photo-publishing/05-02-SUMMARY.md
