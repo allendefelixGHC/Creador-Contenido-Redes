@@ -1581,6 +1581,309 @@
       "waitBetweenTries": 1000,
       "onError": "stopWorkflow",
       "notes": "GETs the published IG carousel post permalink. Idempotent GET — retry is safe. Output: { id, permalink }. Downstream FB chain uses cross-refs to Collect Child IDs for session data."
+    },
+    {
+      "parameters": {
+        "jsCode": "const session = $('🔗 Merge Rehost Output').first().json;\nconst blobUrls = session.blob_urls || [];\nreturn blobUrls.map((entry, i) => ({\n  json: {\n    slide_index: entry.index || (i + 1),\n    blob_url: entry.url,\n  }\n}));",
+        "mode": "runOnceForAllItems"
+      },
+      "id": "fb-carousel-explode",
+      "name": "🖼️ FB: Explode Carousel Slides",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5480,
+        200
+      ],
+      "notes": "Explodes blob_urls from Merge Rehost Output into per-slide items for FB unpublished photo upload. Mirrors IG: Explode Carousel Slides but simpler (no count validation — already done in IG chain)."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v22.0/{{ $env.FACEBOOK_PAGE_ID }}/photos",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ url: $json.blob_url, published: false, access_token: $env.META_PAGE_TOKEN }) }}",
+        "options": {}
+      },
+      "id": "fb-upload-photo-unpublished",
+      "name": "📤 FB: Upload Photo Unpublished",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5700,
+        200
+      ],
+      "retryOnFail": false,
+      "maxTries": 1,
+      "waitBetweenTries": 0,
+      "onError": "stopWorkflow",
+      "notes": "CRITICAL: Retry DISABLED. POST /{PAGE_ID}/photos with published=false creates an unpublished photo that will be included in the multi-photo feed post. Not safe to retry after timeout — could create orphaned unpublished photos. Output: { id: <photo_id> }."
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst session = $('🔗 Merge Rehost Output').first().json;\nconst photoIds = items.map(it => it.json.id).filter(Boolean);\nif (photoIds.length !== session.blob_urls.length) {\n  throw new Error('FB Carousel: expected ' + session.blob_urls.length + ' unpublished photos, got ' + photoIds.length);\n}\nreturn [{\n  json: {\n    photo_ids: photoIds,\n    facebook_caption: session.facebook_caption || session.instagram_caption || '',\n    instagram_permalink: $('🔗 IG: Get Carousel Permalink').first().json.permalink,\n    approval_number: session.approval_number,\n    topic: session.topic,\n    type: session.type,\n    angle: session.angle || null,\n    image_model: session.image_model,\n    num_images: session.blob_urls.length,\n    format: 'carousel',\n    blob_urls: session.blob_urls,\n    instagram_caption: session.instagram_caption,\n  }\n}];",
+        "mode": "runOnceForAllItems"
+      },
+      "id": "fb-collect-photo-ids",
+      "name": "🗂️ FB: Collect Photo IDs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5920,
+        200
+      ],
+      "notes": "Aggregates all FB unpublished photo IDs after fan-out. Validates count. Cross-refs Merge Rehost Output for session data and IG: Get Carousel Permalink for instagram_permalink. Output: single item with full context needed for Publish Feed + WA notification + Sheets log."
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst photoIds = data.photo_ids;\nif (!Array.isArray(photoIds) || photoIds.length === 0) {\n  throw new Error('FB Build attached_media: no photo_ids found');\n}\nconst attachedMedia = photoIds.map(id => ({ media_fbid: id }));\nreturn [{\n  json: {\n    ...data,\n    attached_media: attachedMedia,\n  }\n}];",
+        "mode": "runOnceForAllItems"
+      },
+      "id": "fb-build-attached-media",
+      "name": "🔧 FB: Build attached_media",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6140,
+        200
+      ],
+      "notes": "Builds the attached_media array required by /feed multi-photo POST. Format: [{ media_fbid: photo_id }, ...]. Passes through all session data for downstream nodes."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v22.0/{{ $env.FACEBOOK_PAGE_ID }}/feed",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ message: $json.facebook_caption, attached_media: $json.attached_media, access_token: $env.META_PAGE_TOKEN }) }}",
+        "options": {}
+      },
+      "id": "fb-publish-carousel-feed",
+      "name": "🌐 FB: Publish Carousel Feed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        6360,
+        200
+      ],
+      "retryOnFail": false,
+      "maxTries": 1,
+      "waitBetweenTries": 0,
+      "onError": "stopWorkflow",
+      "notes": "CRITICAL: Retry DISABLED. POST /{PAGE_ID}/feed with attached_media is NOT idempotent — retry creates a duplicate live FB carousel post. Output: { id: <post_id> }. If this fails with 'Invalid parameter: attached_media', fallback is to switch specifyBody to 'string' and stringify the full body in Build attached_media."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.ycloud.com/v2/whatsapp/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $env.YCLOUD_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ from: $env.YCLOUD_WHATSAPP_NUMBER, to: $('🗂️ FB: Collect Photo IDs').first().json.approval_number, type: 'text', text: { body: '✅ Carrusel publicado (' + $('🗂️ FB: Collect Photo IDs').first().json.num_images + ' slides)\\n\\n📸 Instagram: ' + $('🗂️ FB: Collect Photo IDs').first().json.instagram_permalink + '\\n📘 Facebook: https://www.facebook.com/' + $json.id + '\\n\\n📝 Tema: ' + $('🗂️ FB: Collect Photo IDs').first().json.topic } }) }}",
+        "options": {}
+      },
+      "id": "notify-wa-carousel",
+      "name": "✅ Notify WhatsApp Carousel",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        6580,
+        200
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000,
+      "onError": "stopWorkflow",
+      "notes": "Sends carousel publish confirmation via WhatsApp. Cross-refs FB: Collect Photo IDs for session data (approval_number, num_images, instagram_permalink, topic). $json.id is the FB feed post_id from Publish Carousel Feed response. Retry is safe (WA message dedup by YCloud)."
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.GOOGLE_SHEETS_ID }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Log"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Fecha": "={{ new Date().toISOString() }}",
+            "Tema": "={{ $('🗂️ FB: Collect Photo IDs').first().json.topic }}",
+            "Tipo": "={{ $('🗂️ FB: Collect Photo IDs').first().json.type }}",
+            "Angulo": "={{ $('🗂️ FB: Collect Photo IDs').first().json.angle || '' }}",
+            "Plataformas": "={{ Array.isArray($('🗂️ FB: Collect Photo IDs').first().json.blob_urls) ? 'instagram, facebook' : '' }}",
+            "Modelo_Imagen": "={{ $('🗂️ FB: Collect Photo IDs').first().json.image_model }}",
+            "Imagen_URL": "={{ ($('🗂️ FB: Collect Photo IDs').first().json.blob_urls && $('🗂️ FB: Collect Photo IDs').first().json.blob_urls[0] && $('🗂️ FB: Collect Photo IDs').first().json.blob_urls[0].url) || '' }}",
+            "Estado": "Publicado",
+            "IG_URL": "={{ $('🗂️ FB: Collect Photo IDs').first().json.instagram_permalink }}",
+            "FB_URL": "={{ 'https://www.facebook.com/' + $('🌐 FB: Publish Carousel Feed').first().json.id }}",
+            "Publicado_En": "={{ new Date().toISOString() }}",
+            "Publish_Status": "success"
+          },
+          "schema": [
+            {
+              "id": "Fecha",
+              "displayName": "Fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Tema",
+              "displayName": "Tema",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Tipo",
+              "displayName": "Tipo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Angulo",
+              "displayName": "Angulo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Plataformas",
+              "displayName": "Plataformas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Modelo_Imagen",
+              "displayName": "Modelo_Imagen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Imagen_URL",
+              "displayName": "Imagen_URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Estado",
+              "displayName": "Estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "IG_URL",
+              "displayName": "IG_URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "FB_URL",
+              "displayName": "FB_URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Publicado_En",
+              "displayName": "Publicado_En",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Publish_Status",
+              "displayName": "Publish_Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "operation": "append",
+        "resource": "sheet"
+      },
+      "id": "log-sheets-carousel",
+      "name": "📊 Google Sheets Log (Carousel)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        6800,
+        200
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "XjKteoOTobs1qR55",
+          "name": "Google Sheets account"
+        }
+      },
+      "notes": "Appends a carousel publish log row to the same Log sheet as the single-post path. Uses same credentials (XjKteoOTobs1qR55) and schema. Cross-refs FB: Collect Photo IDs for session data, FB: Publish Carousel Feed for post_id. Same column schema as single-post log."
     }
   ],
   "connections": {
@@ -2048,6 +2351,83 @@
         [
           {
             "node": "🔗 IG: Get Carousel Permalink",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔗 IG: Get Carousel Permalink": {
+      "main": [
+        [
+          {
+            "node": "🖼️ FB: Explode Carousel Slides",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🖼️ FB: Explode Carousel Slides": {
+      "main": [
+        [
+          {
+            "node": "📤 FB: Upload Photo Unpublished",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📤 FB: Upload Photo Unpublished": {
+      "main": [
+        [
+          {
+            "node": "🗂️ FB: Collect Photo IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🗂️ FB: Collect Photo IDs": {
+      "main": [
+        [
+          {
+            "node": "🔧 FB: Build attached_media",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔧 FB: Build attached_media": {
+      "main": [
+        [
+          {
+            "node": "🌐 FB: Publish Carousel Feed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🌐 FB: Publish Carousel Feed": {
+      "main": [
+        [
+          {
+            "node": "✅ Notify WhatsApp Carousel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "✅ Notify WhatsApp Carousel": {
+      "main": [
+        [
+          {
+            "node": "📊 Google Sheets Log (Carousel)",
             "type": "main",
             "index": 0
           }
