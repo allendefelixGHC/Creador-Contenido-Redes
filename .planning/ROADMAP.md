@@ -28,11 +28,11 @@ See [v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md) for full phase details.
 
 #### Phase 5: Instagram Single-Photo Publishing
 
-- [ ] **Phase 5: Instagram Single-Photo Publishing** — Full IG single-post pipeline: re-hosted image → container → media_publish (no retry) → permalink → WhatsApp success notification → Sheets log
+- [x] **Phase 5: Instagram Single-Photo Publishing** — Full IG single-post pipeline: re-hosted image → container → media_publish (no retry) → permalink → WhatsApp success notification → Sheets log
 
 #### Phase 6: Facebook Single-Photo Publishing
 
-- [ ] **Phase 6: Facebook Single-Photo Publishing** — FB single-post via `/photos` endpoint running in parallel with IG, both URLs in the same WhatsApp success message
+- [ ] **Phase 6: Facebook Single-Photo Publishing** — FB single-post via `/photos` endpoint after IG publish, both URLs in the same WhatsApp success message
 
 #### Phase 7: Carousel Publishing (IG + FB)
 
@@ -71,8 +71,8 @@ See [v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md) for full phase details.
   4. The Google Sheets log gains `IG_URL` and `Publicado_En` columns; the new row contains the permalink and publication timestamp
   5. The n8n execution shows a 30-second Wait between container creation and `media_publish`, confirming the container readiness guard is in place
 **Plans**: 2 plans
-- [ ] 05-01-PLAN.md — Add IG publish chain (5 new nodes + carousel guard + Sheets Log cross-refs) to n8n/workflow.json
-- [ ] 05-02-PLAN.md — Deploy to n8n-azure, add Sheet columns, run Tests A (happy path) + B (duplicate prevention) + C (30s Wait trace)
+- [x] 05-01-PLAN.md — Add IG publish chain (5 new nodes + carousel guard + Sheets Log cross-refs) to n8n/workflow.json
+- [x] 05-02-PLAN.md — Deploy to n8n-azure, add Sheet columns, run Tests A (happy path) + B (duplicate prevention) + C (30s Wait trace)
 
 ### Phase 6: Facebook Single-Photo Publishing
 **Goal**: After SI approval, the same single-photo post is also published to Facebook and both the IG and FB URLs appear together in the WhatsApp success message
@@ -82,7 +82,9 @@ See [v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md) for full phase details.
   1. Approving SI on a single-photo brief results in a live Facebook post on the Propulsar page within 90 seconds of the IG post
   2. The WhatsApp success message contains both the IG permalink and the FB post URL (not two separate messages — one combined message)
   3. The Google Sheets row contains both `IG_URL` and `FB_URL` columns populated after a successful publish
-**Plans**: TBD
+**Plans**: 2 plans
+- [ ] 06-01-PLAN.md — Add FB Publish Photo node + update WA notification and Sheets Log in workflow.json
+- [ ] 06-02-PLAN.md — Deploy to n8n-azure, verify FACEBOOK_PAGE_ID env var, run E2E test (FB + IG + WA + Sheets)
 
 ### Phase 7: Carousel Publishing (IG + FB)
 **Goal**: Approving a multi-slide carousel brief publishes the full carousel to both Instagram and Facebook with all slides in correct order
@@ -114,7 +116,7 @@ See [v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md) for full phase details.
 **Success Criteria** (what must be TRUE):
   1. Simulating a Meta API failure (invalid token or network error) sends a WhatsApp message containing the error code, human-readable message, `fbtrace_id`, and which platform failed (IG/FB/both)
   2. After a successful IG publish, a first comment appears on the post containing the hashtag block (not in the caption — caption remains clean)
-  3. Using an expired or revoked Meta token sends a specific WhatsApp alert: "Token Meta expirado — verificar que Susana sigue como admin de la página" (not a generic error)
+  3. Using an expired or revoked Meta token sends a specific WhatsApp alert: "Token Meta expirado — verificar que Susana sigue como admin de la pagina" (not a generic error)
   4. A publish failure creates a Google Sheets row with `Publish_Status=failed` and the error message — the audit trail is complete even when publishing does not succeed
   5. After a successful publish, the Azure Blob files for that post are deleted; after a confirmed failure, blobs are also cleaned up — no orphaned storage accumulates
 **Plans**: TBD
@@ -126,9 +128,9 @@ See [v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md) for full phase details.
 | 1. Wizard Carousel Flow | v1.0 | 2/2 | Complete | 2026-04-04 |
 | 2. n8n Content Generation | v1.0 | 2/2 | Complete | 2026-04-06 |
 | 3. n8n Image Generation + WhatsApp Preview | v1.0 | 3/3 | Complete | 2026-04-06 |
-| 4. Azure Blob Re-hosting | v1.1 | 0/? | Not started | - |
-| 5. Instagram Single-Photo Publishing | v1.1 | 0/2 | Not started | - |
-| 6. Facebook Single-Photo Publishing | v1.1 | 0/? | Not started | - |
+| 4. Azure Blob Re-hosting | v1.1 | 2/2 | Complete | 2026-04-16 |
+| 5. Instagram Single-Photo Publishing | v1.1 | 2/2 | Complete | 2026-04-16 |
+| 6. Facebook Single-Photo Publishing | v1.1 | 0/2 | Planning complete | - |
 | 7. Carousel Publishing (IG + FB) | v1.1 | 0/? | Not started | - |
 | 8. Scheduling | v1.1 | 0/? | Not started | - |
 | 9. Error Hardening + Hashtags + Token Alerts | v1.1 | 0/? | Not started | - |
