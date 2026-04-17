@@ -1407,6 +1407,180 @@
         700
       ],
       "notes": "Supabase HTTP Request replaced the item with the inserted row. Re-attaches the pre-insert carousel data via cross-ref to Collect Image URLs, plus session_id from the Supabase insert response. Mirrors 🔗 Re-attach session data on the single-post path. Downstream WA nodes (Split URLs WA, Preparar mensaje WA) need the original carousel data shape."
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $('🔗 Merge Rehost Output').first().json;\nconst blobUrls = data.blob_urls || [];\nif (blobUrls.length === 0) {\n  throw new Error('IG Carousel Explode: no blob_urls found in Merge Rehost Output');\n}\nif (blobUrls.length > 10) {\n  throw new Error('IG Carousel Explode: carousel exceeds 10-slide Meta limit (' + blobUrls.length + ' slides)');\n}\nreturn blobUrls.map((entry, i) => ({\n  json: {\n    slide_index: entry.index || (i + 1),\n    blob_url: entry.url,\n    num_images: blobUrls.length,\n  }\n}));",
+        "mode": "runOnceForAllItems"
+      },
+      "id": "ig-carousel-explode",
+      "name": "🎠 IG: Explode Carousel Slides",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3940,
+        200
+      ],
+      "notes": "Explodes blob_urls array from Merge Rehost Output into one item per slide. Validates: not empty, not > 10 slides (Meta limit). Connected from TRUE output of ¿Formato Carrusel?."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v22.0/{{ $env.INSTAGRAM_ACCOUNT_ID }}/media",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ image_url: $json.blob_url, is_carousel_item: true, access_token: $env.META_PAGE_TOKEN }) }}",
+        "options": {}
+      },
+      "id": "ig-create-child-container",
+      "name": "🖼️ IG: Create Child Container",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4160,
+        200
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "stopWorkflow",
+      "notes": "Creates one IG child container per carousel slide. is_carousel_item=true required by Meta. Idempotent — retry is safe. Runs once per slide (fan-out from Explode). Output: { id: <child_container_id> }."
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst session = $('🔗 Merge Rehost Output').first().json;\nconst childIds = items.map(it => it.json.id).filter(Boolean);\nif (childIds.length !== session.blob_urls.length) {\n  throw new Error('IG Carousel: expected ' + session.blob_urls.length + ' child containers, got ' + childIds.length);\n}\nreturn [{\n  json: {\n    topic: session.topic,\n    type: session.type,\n    angle: session.angle || null,\n    platforms: session.platforms,\n    image_model: session.image_model,\n    instagram_caption: session.instagram_caption,\n    facebook_caption: session.facebook_caption,\n    blob_urls: session.blob_urls,\n    approval_number: session.approval_number,\n    format: session.format,\n    num_images: session.blob_urls.length,\n    child_ids: childIds,\n    children_csv: childIds.join(','),\n  }\n}];",
+        "mode": "runOnceForAllItems"
+      },
+      "id": "ig-collect-child-ids",
+      "name": "🗂️ IG: Collect Child IDs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4380,
+        200
+      ],
+      "notes": "Aggregates all child container IDs after fan-out. Validates count matches expected. Builds children_csv for parent container. Cross-refs Merge Rehost Output for session metadata. Output: single item with full session + child_ids + children_csv."
+    },
+    {
+      "parameters": {
+        "amount": 30,
+        "unit": "seconds"
+      },
+      "id": "ig-wait-carousel",
+      "name": "⏳ IG: Wait 30s Carousel",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        4600,
+        200
+      ],
+      "notes": "30s wait between child container creation and parent carousel container creation. Meta requires all child containers to reach FINISHED state before parent can be created. Same pattern as Wait 30s (container ready) on single-post path."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v22.0/{{ $env.INSTAGRAM_ACCOUNT_ID }}/media",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ media_type: 'CAROUSEL', children: $json.children_csv, caption: $json.instagram_caption, access_token: $env.META_PAGE_TOKEN }) }}",
+        "options": {}
+      },
+      "id": "ig-create-parent-container",
+      "name": "🎠 IG: Create Parent Container",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4820,
+        200
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "stopWorkflow",
+      "notes": "Creates the IG carousel parent container using all child IDs (comma-separated). media_type=CAROUSEL required. Idempotent — retry is safe. Output: { id: <parent_container_id> }."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v22.0/{{ $env.INSTAGRAM_ACCOUNT_ID }}/media_publish",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ creation_id: $json.id, access_token: $env.META_PAGE_TOKEN }) }}",
+        "options": {}
+      },
+      "id": "ig-carousel-media-publish",
+      "name": "🚀 IG: Carousel media_publish",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5040,
+        200
+      ],
+      "retryOnFail": false,
+      "maxTries": 1,
+      "waitBetweenTries": 0,
+      "onError": "stopWorkflow",
+      "notes": "CRITICAL: Retry DISABLED. media_publish is NOT idempotent — retry after timeout where Meta already processed creates a duplicate live carousel post. creation_id = parent container id from previous node. Output: { id: <published_media_id> }."
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://graph.facebook.com/v22.0/{{ $json.id }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "permalink"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $env.META_PAGE_TOKEN }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ig-get-carousel-permalink",
+      "name": "🔗 IG: Get Carousel Permalink",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5260,
+        200
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000,
+      "onError": "stopWorkflow",
+      "notes": "GETs the published IG carousel post permalink. Idempotent GET — retry is safe. Output: { id, permalink }. Downstream FB chain uses cross-refs to Collect Child IDs for session data."
     }
   ],
   "connections": {
@@ -1798,10 +1972,82 @@
     },
     "🔀 ¿Formato Carrusel?": {
       "main": [
-        [],
+        [
+          {
+            "node": "🎠 IG: Explode Carousel Slides",
+            "type": "main",
+            "index": 0
+          }
+        ],
         [
           {
             "node": "📤 IG: Create Container",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🎠 IG: Explode Carousel Slides": {
+      "main": [
+        [
+          {
+            "node": "🖼️ IG: Create Child Container",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🖼️ IG: Create Child Container": {
+      "main": [
+        [
+          {
+            "node": "🗂️ IG: Collect Child IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🗂️ IG: Collect Child IDs": {
+      "main": [
+        [
+          {
+            "node": "⏳ IG: Wait 30s Carousel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⏳ IG: Wait 30s Carousel": {
+      "main": [
+        [
+          {
+            "node": "🎠 IG: Create Parent Container",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🎠 IG: Create Parent Container": {
+      "main": [
+        [
+          {
+            "node": "🚀 IG: Carousel media_publish",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🚀 IG: Carousel media_publish": {
+      "main": [
+        [
+          {
+            "node": "🔗 IG: Get Carousel Permalink",
             "type": "main",
             "index": 0
           }
