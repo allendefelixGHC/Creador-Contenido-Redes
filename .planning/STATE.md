@@ -5,17 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-04-10)
 
 **Core value:** Generate complete social media posts (single or carousel) in one wizard run, with AI-generated images and WhatsApp preview — and now automatically publish to Instagram + Facebook after SI approval
-**Current focus:** v1.1 — Phase 6 complete (Plans 01+02); next is Phase 7 (Carousel Publishing IG + FB)
+**Current focus:** v1.1 — Phase 7 complete (Plans 01+02+03); next is Phase 8 (Scheduling)
 
 ## Current Position
 
 Milestone: v1.1 Automatic Publishing
-Phase: 7 of 9 (Carousel Publishing IG + FB) — IN PROGRESS
-Current Plan: 07-02 COMPLETE, 07-03 pending
-Next: Phase 7 Plan 03 (Deploy + E2E carousel verification)
-Last activity: 2026-04-17 — Plan 07-02 complete. Added 14-node carousel publish chain: IG 3-step (Explode+N child containers+Collect IDs+30s Wait+Parent container+media_publish+Permalink) + FB 2-step (Explode+N unpublished photos+Collect IDs+Build attached_media+/feed POST) + WA carousel notification + Sheets log. All non-idempotent publish nodes have retryOnFail=false. Node count: 43→57. Commits b097282 (Task 1) + 566e1f9 (Task 2).
+Phase: 7 of 9 (Carousel Publishing IG + FB) — COMPLETE 2026-04-17
+Next: Phase 8 (Scheduling)
+Last activity: 2026-04-17 — Phase 7 complete. Plan 01: Supabase schema + format branch + guard removal (40→43 nodes). Plan 02: IG 3-step + FB 2-step carousel chain (43→57 nodes). Plan 03: deployed to n8n-azure, 3 E2E tests pass (5-slide carousel, 3-slide carousel, single-post regression). Wait bumped 30→45s after media_publish race (exec 117). Commits 9cdd5fd→7ba3ae7.
 
-Progress: [████████░░] ~67% (v1.1, 8/12 plans — Phase 4-7 Plan 02 complete) — [██████████] 100% (v1.0 complete)
+Progress: [████████░░] ~75% (v1.1, 9/12 plans — Phase 4-7 complete) — [██████████] 100% (v1.0 complete)
 
 ## Performance Metrics
 
@@ -38,7 +37,7 @@ Progress: [████████░░] ~67% (v1.1, 8/12 plans — Phase 4-7 
 | 4. Azure Blob Re-hosting | 2 | **Complete** — Plan 01 + Plan 02 (Task 1 + Task 2) all green; Tests A/B/C PASS 2026-04-16 |
 | 5. Instagram Single-Photo Publishing | 2 | **Complete** — Plans 01+02 done 2026-04-16; 2 live IG posts verified, 10 bugs fixed during deploy |
 | 6. Facebook Single-Photo Publishing | 2 | **Complete** — Plans 01+02 done 2026-04-17; 6 E2E tests, 3 bugs fixed (WA newlines, Sheets op, Sheets col order) |
-| 7. Carousel Publishing IG + FB | 3 | **In Progress** — Plan 01 complete 2026-04-17 (guard removed, format branch, Supabase carousel session save, 40→43 nodes) |
+| 7. Carousel Publishing IG + FB | 3 | **Complete** — Plans 01+02+03 done 2026-04-17; 3 E2E tests pass, 1 bug fixed (wait 30→45s), 57 nodes deployed |
 
 **Plan execution history (v1.1):**
 
@@ -53,6 +52,7 @@ Progress: [████████░░] ~67% (v1.1, 8/12 plans — Phase 4-7 
 | 06-01 | ~8 min | 1/1 complete | 1 modified | a436122 (FB publish node + rewire + WA update + Sheets FB_URL) |
 | 07-01 | ~15 min (Task 1 pre-done by user, Task 2 auto) | 2/2 complete | 1 modified | 9cdd5fd (guard removed + format branch + carousel Supabase save) |
 | 07-02 | ~20 min | 2/2 complete | 1 modified | b097282 (IG carousel 7 nodes), 566e1f9 (FB+WA+Sheets 7 nodes) |
+| 07-03 | ~30 min (deploy + 3 E2E tests + 1 bug fix) | 2/2 complete | 1 modified | 3ff80d5 (deploy), 7ba3ae7 (wait 30→45s fix) |
 
 ## Accumulated Context
 
@@ -99,6 +99,9 @@ Recent decisions relevant to v1.1:
 - [Phase 07 Plan 02]: FB Publish Carousel Feed uses JSON mode with attached_media array built in Code node; fallback (if Meta rejects) is to stringify full body in Build attached_media
 - [Phase 07 Plan 02]: 🗂️ FB: Collect Photo IDs is the single aggregation point for all downstream data (WA + Sheets cross-ref this node)
 - [Phase 07 Plan 02]: Carousel Sheets log uses identical schema + credentials (XjKteoOTobs1qR55) + tab (Log) as single-post log
+- [Phase 07 Plan 03]: Wait node bumped 30→45s after exec 117 failed with "Media ID is not available" (9007/2207027) — 30s insufficient for 5-slide child container processing
+- [Phase 07 Plan 03]: n8n API PUT requires stripped settings object (only executionOrder) — full workflow.json settings cause 400 "must NOT have additional properties"
+- [Phase 07 Plan 03]: Simultaneous briefs cause session collision in Supabase (last-write-wins) — E2E tests must be run sequentially, one brief at a time
 
 ### Pending Todos
 
@@ -112,12 +115,12 @@ Recent decisions relevant to v1.1:
 - **Azure AllowBlobPublicAccess:** RESOLVED 2026-04-10 — storage account `propulsarcontent`, container `posts`, SAS `sp=cw sr=c se=2027-04-10`, smoke-tested PUT 201 + anonymous GET 200
 - **Plan 04-01 manual follow-up:** RESOLVED 2026-04-10 — orchestrator imported `n8n/subworkflow-rehost-images.json` via n8n public API, ID `BIaG266Q6AZpv4Sq` baked into main workflow.json in commit `23d195d`.
 - **Plan 04-02 human-verify checkpoint (Task 2):** RESOLVED 2026-04-16 — agent executed Tests A+B+C end-to-end via direct sub-workflow invocation (temp test branch inserted into main, tests run, branch removed). All 3 tests PASS. 3 pre-existing bugs in the sub-workflow were discovered and patched during execution (see Deviations in 04-02-SUMMARY.md).
-- **Supabase session schema gap:** The `content_sessions` table lacks `format` and `image_urls` columns, so the end-to-end approval flow (main webhook -> Supabase insert -> WA preview -> SI reply -> resumption -> re-host) only works for single-post. Carousel flow needs a schema extension before a publishing phase can run carousels end-to-end. This did not block Phase 4 verification (agent bypassed via direct sub-workflow invocation) but is now a known concern for Phases 5-7.
+- **Supabase session schema gap:** RESOLVED 2026-04-17 — `format` (TEXT) + `image_urls` (JSONB) columns added to content_sessions. Carousel approval flow works end-to-end (Phase 7 Plan 01).
 - **Phase 05 Plan 02 E2E:** RESOLVED 2026-04-16 — 10 bugs fixed during deployment, 2 live IG posts published (exec 90: /p/DXNT9PRlxCf, exec 93: /p/DXNUaGHFx9O), 30s wait confirmed at 30.238s, retry-disabled proven structurally. Google Sheets row logging config correct after 827af90 but not empirically confirmed — verify at Phase 6 start.
 - **Supabase session status not consumed after publish:** KNOWN GAP — session stays "pending" after publish. Deferred to Phase 9 (error handling). Low risk in practice (WA previews are one-off interactions).
 
 ## Session Continuity
 
 Last session: 2026-04-17
-Stopped at: Phase 7 Plan 02 complete — carousel IG 3-step + FB 2-step publish chain + WA notification + Sheets log all added (14 nodes). Workflow 43→57 nodes. Commits b097282 (Task 1) + 566e1f9 (Task 2). Next: Phase 7 Plan 03 (deploy + E2E carousel verification).
-Resume file: .planning/phases/07-carousel-publishing-ig-fb/07-01-SUMMARY.md
+Stopped at: Phase 7 complete — all 3 plans done. E2E verified: 5-slide carousel, 3-slide carousel, single-post regression. 57 nodes deployed. Next: Phase 8 (Scheduling).
+Resume file: .planning/phases/07-carousel-publishing-ig-fb/07-03-SUMMARY.md
