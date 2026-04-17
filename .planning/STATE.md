@@ -155,5 +155,5 @@ Recent decisions relevant to v1.1:
 ## Session Continuity
 
 Last session: 2026-04-17
-Stopped at: Phase 9 Plan 03 complete — v1.1 ALL PLANS COMPLETE. Workflow deployed 73 nodes. Error handler E2E tested (4 bugs fixed). Commits c0dc61d + 130ffdf. Checkpoint: human-verify Task 3 pending.
+Stopped at: Phase 9 Plan 03 APPROVED 2026-04-17 — v1.1 ALL PLANS COMPLETE. Workflow deployed 73 nodes. Error handler E2E tested (4 bugs fixed). Commits c0dc61d + 130ffdf. Human verification passed: WA error alert confirmed, Sheets fail log row confirmed, blob cleanup (404) confirmed. Known gap: instagram_manage_comments scope missing from Meta token (hashtag comments blocked until Susana regenerates token).
 Resume file: .planning/phases/09-error-hardening-hashtags-token-alerts/09-03-SUMMARY.md
