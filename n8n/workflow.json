@@ -349,7 +349,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ session_id: 'propulsar_' + Date.now(), approval_number: $json.approval_number, topic: $json.topic, type: $json.type, angle: $json.angle || null, platforms: $json.platforms || [], image_model: $json.image_model, image_url: $json.image_url || null, final_image_url: $json.final_image_url, instagram_caption: ($json.instagram && $json.instagram.caption) || null, facebook_caption: ($json.facebook && $json.facebook.caption) || null, status: 'pending' }) }}",
+        "jsonBody": "={{ JSON.stringify({ session_id: 'propulsar_' + Date.now(), approval_number: $json.approval_number, topic: $json.topic, type: $json.type, angle: $json.angle || null, platforms: $json.platforms || [], image_model: $json.image_model, image_url: $json.image_url || null, final_image_url: $json.final_image_url, instagram_caption: ($json.instagram && $json.instagram.caption) || null, facebook_caption: ($json.facebook && $json.facebook.caption) || null, status: 'pending', publish_at: .publish_at || 'now' }) }}",
         "options": {
           "response": {
             "response": {
@@ -1293,7 +1293,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ session_id: 'propulsar_' + Date.now(), approval_number: $json.approval_number, topic: $json.topic, type: $json.type, angle: $json.angle || null, platforms: $json.platforms || [], image_model: $json.image_model || 'ideogram', format: 'carousel', image_urls: $json.image_urls, instagram_caption: $json.instagram_caption || ($json.instagram && $json.instagram.caption) || null, facebook_caption: $json.facebook_caption || ($json.facebook && $json.facebook.caption) || null, status: 'pending' }) }}",
+        "jsonBody": "={{ JSON.stringify({ session_id: 'propulsar_' + Date.now(), approval_number: $json.approval_number, topic: $json.topic, type: $json.type, angle: $json.angle || null, platforms: $json.platforms || [], image_model: $json.image_model || 'ideogram', format: 'carousel', image_urls: $json.image_urls, instagram_caption: $json.instagram_caption || ($json.instagram && $json.instagram.caption) || null, facebook_caption: $json.facebook_caption || ($json.facebook && $json.facebook.caption) || null, status: 'pending', publish_at: .publish_at || 'now' }) }}",
         "options": {
           "response": {
             "response": {
@@ -1884,6 +1884,57 @@
         }
       },
       "notes": "Appends a carousel publish log row to the same Log sheet as the single-post path. Uses same credentials (XjKteoOTobs1qR55) and schema. Cross-refs FB: Collect Photo IDs for session data, FB: Publish Carousel Feed for post_id. Same column schema as single-post log."
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = .first().json;\nconst pub = data.publish_at;\n\nlet scheduled = false;\nlet wait_seconds = 0;\n\nif (pub && pub !== 'now') {\n  const diffMs = new Date(pub).getTime() - Date.now();\n  if (diffMs > 65000 && diffMs <= 86400000) {\n    scheduled = true;\n    wait_seconds = Math.round(diffMs / 1000);\n  }\n  // Past time or > 24h: route to immediate (scheduled stays false)\n}\n\nreturn [{ json: { ...data, scheduled: String(scheduled), wait_seconds } }];",
+        "mode": "runOnceForAllItems"
+      },
+      "id": "compute-wait-seconds",
+      "name": "🕐 Compute wait_seconds",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2780,
+        380
+      ],
+      "notes": "SCHED-03: Computes wait_seconds from publish_at. Routes to immediate if publish_at is now, past, <65s (n8n DB threshold), or >24h. 65s floor: n8n does not persist Wait < 65s to DB — container restart would lose execution."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.scheduled }}",
+              "value2": "true"
+            }
+          ]
+        }
+      },
+      "id": "check-scheduled",
+      "name": "⏰ ¿Programado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        2840,
+        380
+      ],
+      "notes": "SCHED-01: Routes scheduled=true to Wait path (output 0/TRUE), scheduled=false to immediate path (output 1/FALSE). Uses IF typeVersion 1 — v2/Switch v3 broken in n8n 2.14.2."
+    },
+    {
+      "parameters": {
+        "amount": "={{ $json.wait_seconds }}",
+        "unit": "seconds"
+      },
+      "id": "wait-scheduled-publish",
+      "name": "⏳ Wait — Scheduled Publish",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        2900,
+        280
+      ],
+      "notes": "SCHED-02: Pauses execution for wait_seconds (computed by 🕐 Compute wait_seconds). Uses 'After Time Interval' mode (amount + unit), NOT 'At Specified Time' (unreliable per n8n #14723). wait_seconds is a Number, not string."
     }
   ],
   "connections": {
@@ -2186,7 +2237,7 @@
       "main": [
         [
           {
-            "node": "🔧 Prep Re-host Input",
+            "node": "🕐 Compute wait_seconds",
             "type": "main",
             "index": 0
           }
@@ -2494,6 +2545,46 @@
         [
           {
             "node": "✅ Notify WhatsApp Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🕐 Compute wait_seconds": {
+      "main": [
+        [
+          {
+            "node": "⏰ ¿Programado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⏰ ¿Programado?": {
+      "main": [
+        [
+          {
+            "node": "⏳ Wait — Scheduled Publish",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "🔧 Prep Re-host Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⏳ Wait — Scheduled Publish": {
+      "main": [
+        [
+          {
+            "node": "🔧 Prep Re-host Input",
             "type": "main",
             "index": 0
           }
