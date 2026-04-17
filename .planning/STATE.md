@@ -10,11 +10,12 @@ See: .planning/PROJECT.md (updated 2026-04-10)
 ## Current Position
 
 Milestone: v1.1 Automatic Publishing
-Phase: 6 of 9 (Facebook Single-Photo Publishing) — COMPLETE 2026-04-17 (Plans 01+02)
-Next: Phase 7 (Carousel Publishing IG + FB)
+Phase: 7 of 9 (Carousel Publishing IG + FB) — IN PROGRESS
+Current Plan: 07-01 COMPLETE, 07-02 and 07-03 pending
+Next: Phase 7 Plan 02 (Carousel IG + FB publish nodes)
 Last activity: 2026-04-17 — Phase 6 complete. Plan 06-01: added FB Publish Photo node (40 nodes). Plan 06-02: deployed + 6 E2E test executions, 3 bugs fixed (WA newlines, Sheets operation, Sheets column order). Final exec 111: all 14/14 nodes pass. Live FB post, combined WA notification, Sheets row with IG_URL+FB_URL. Commits a436122→8aaea68.
 
-Progress: [██████░░░░] ~50% (v1.1, 6/12 plans — Phase 4-6 complete) — [██████████] 100% (v1.0 complete)
+Progress: [███████░░░] ~58% (v1.1, 7/12 plans — Phase 4-7 Plan 01 complete) — [██████████] 100% (v1.0 complete)
 
 ## Performance Metrics
 
@@ -37,6 +38,7 @@ Progress: [██████░░░░] ~50% (v1.1, 6/12 plans — Phase 4-6 
 | 4. Azure Blob Re-hosting | 2 | **Complete** — Plan 01 + Plan 02 (Task 1 + Task 2) all green; Tests A/B/C PASS 2026-04-16 |
 | 5. Instagram Single-Photo Publishing | 2 | **Complete** — Plans 01+02 done 2026-04-16; 2 live IG posts verified, 10 bugs fixed during deploy |
 | 6. Facebook Single-Photo Publishing | 2 | **Complete** — Plans 01+02 done 2026-04-17; 6 E2E tests, 3 bugs fixed (WA newlines, Sheets op, Sheets col order) |
+| 7. Carousel Publishing IG + FB | 3 | **In Progress** — Plan 01 complete 2026-04-17 (guard removed, format branch, Supabase carousel session save, 40→43 nodes) |
 
 **Plan execution history (v1.1):**
 
@@ -49,6 +51,7 @@ Progress: [██████░░░░] ~50% (v1.1, 6/12 plans — Phase 4-6 
 | 06-01 | ~8 min | 1/1 complete | 1 modified | a436122 (FB node + rewire), 335dbb6 (summary) |
 | 06-02 | ~40 min (6 E2E tests, 3 bug fixes) | 2/2 complete | 1 modified | 0d48d27 (deploy), 5d089a7 (3 fixes), 8aaea68 (summary) |
 | 06-01 | ~8 min | 1/1 complete | 1 modified | a436122 (FB publish node + rewire + WA update + Sheets FB_URL) |
+| 07-01 | ~15 min (Task 1 pre-done by user, Task 2 auto) | 2/2 complete | 1 modified | 9cdd5fd (guard removed + format branch + carousel Supabase save) |
 
 ## Accumulated Context
 
@@ -86,6 +89,10 @@ Recent decisions relevant to v1.1:
 - [Phase 06 Plan 01]: FB: Publish Photo placed sequentially after IG: Get Permalink (not parallel) — avoids Set v3 fan-out cross-ref silent data drop pitfall from Phase 4
 - [Phase 06 Plan 01]: retryOnFail=false on FB: Publish Photo — POST /{PAGE_ID}/photos is not idempotent, retry creates duplicate live FB post (same pattern as IG media_publish)
 - [Phase 06 Plan 01]: FB URL constructed inline as 'https://www.facebook.com/' + post_id — /photos response includes post_id directly, no second GET needed
+- [Phase 07 Plan 01]: 🔀 ¿Formato Carrusel? uses IF typeVersion 1 — v2/Switch v3 broken in n8n 2.14.2 (same constraint as all other IF nodes in this workflow)
+- [Phase 07 Plan 01]: TRUE output (index 0) of format branch left unconnected — Plan 02 connects carousel IG+FB publish chain there; avoids broken-connection deferral
+- [Phase 07 Plan 01]: Carousel Supabase session save placed BEFORE Split URLs WA (before WA preview images are sent) — SI approval webhook needs session to exist at reply time
+- [Phase 07 Plan 01]: 🔗 Re-attach carousel data cross-refs '🗂️ Collect Image URLs' for all carousel fields — Supabase INSERT response replaces item with inserted row, original data only available via cross-ref (same pattern as single-post Re-attach session data)
 
 ### Pending Todos
 
@@ -106,5 +113,5 @@ Recent decisions relevant to v1.1:
 ## Session Continuity
 
 Last session: 2026-04-17
-Stopped at: Phase 6 complete — FB single-photo publishing E2E verified (exec 111, 14/14 nodes). 3 bugs fixed during deploy (WA newlines, Sheets operation, Sheets column order). Sheets logging empirically confirmed (closing Phase 5 gap). Next: Phase 7 (Carousel Publishing IG + FB).
-Resume file: .planning/phases/06-facebook-single-photo-publishing/06-02-SUMMARY.md
+Stopped at: Phase 7 Plan 01 complete — carousel guard removed, format branch IF node added (🔀 ¿Formato Carrusel?), carousel Supabase session save added (💾 Guardar sesión Supabase (Carousel)), Re-attach carousel data node added. Workflow 40→43 nodes. Commit 9cdd5fd. Next: Phase 7 Plan 02 (carousel IG + FB publish nodes).
+Resume file: .planning/phases/07-carousel-publishing-ig-fb/07-01-SUMMARY.md
