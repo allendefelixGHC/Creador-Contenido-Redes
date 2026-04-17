@@ -32,7 +32,7 @@ See [v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md) for full phase details.
 
 #### Phase 6: Facebook Single-Photo Publishing
 
-- [ ] **Phase 6: Facebook Single-Photo Publishing** — FB single-post via `/photos` endpoint after IG publish, both URLs in the same WhatsApp success message
+- [x] **Phase 6: Facebook Single-Photo Publishing** — Completed 2026-04-17 (FB publish + combined WA notification + Sheets logging; 3 deploy bugs fixed during E2E)
 
 #### Phase 7: Carousel Publishing (IG + FB)
 
@@ -83,8 +83,8 @@ See [v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md) for full phase details.
   2. The WhatsApp success message contains both the IG permalink and the FB post URL (not two separate messages — one combined message)
   3. The Google Sheets row contains both `IG_URL` and `FB_URL` columns populated after a successful publish
 **Plans**: 2 plans
-- [ ] 06-01-PLAN.md — Add FB Publish Photo node + update WA notification and Sheets Log in workflow.json
-- [ ] 06-02-PLAN.md — Deploy to n8n-azure, verify FACEBOOK_PAGE_ID env var, run E2E test (FB + IG + WA + Sheets)
+- [x] 06-01-PLAN.md — Add FB Publish Photo node + update WA notification and Sheets Log in workflow.json
+- [x] 06-02-PLAN.md — Deploy to n8n-azure, verify FACEBOOK_PAGE_ID env var, run E2E test (FB + IG + WA + Sheets)
 
 ### Phase 7: Carousel Publishing (IG + FB)
 **Goal**: Approving a multi-slide carousel brief publishes the full carousel to both Instagram and Facebook with all slides in correct order
@@ -130,7 +130,7 @@ See [v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md) for full phase details.
 | 3. n8n Image Generation + WhatsApp Preview | v1.0 | 3/3 | Complete | 2026-04-06 |
 | 4. Azure Blob Re-hosting | v1.1 | 2/2 | Complete | 2026-04-16 |
 | 5. Instagram Single-Photo Publishing | v1.1 | 2/2 | Complete | 2026-04-16 |
-| 6. Facebook Single-Photo Publishing | v1.1 | 0/2 | Planning complete | - |
+| 6. Facebook Single-Photo Publishing | v1.1 | 2/2 | Complete | 2026-04-17 |
 | 7. Carousel Publishing (IG + FB) | v1.1 | 0/? | Not started | - |
 | 8. Scheduling | v1.1 | 0/? | Not started | - |
 | 9. Error Hardening + Hashtags + Token Alerts | v1.1 | 0/? | Not started | - |

@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-04-10)
 
 **Core value:** Generate complete social media posts (single or carousel) in one wizard run, with AI-generated images and WhatsApp preview — and now automatically publish to Instagram + Facebook after SI approval
-**Current focus:** v1.1 — Phase 6 Plan 02 in progress (Task 1 complete, awaiting human E2E verification)
+**Current focus:** v1.1 — Phase 6 complete (Plans 01+02); next is Phase 7 (Carousel Publishing IG + FB)
 
 ## Current Position
 
 Milestone: v1.1 Automatic Publishing
-Phase: 6 of 9 (Facebook Single-Photo Publishing) — IN PROGRESS (Plan 02 Task 1 complete, at checkpoint)
-Next: Phase 6 Plan 02 Task 2 — E2E test (human verifies FB post + WA notification + Sheets logging)
-Last activity: 2026-04-17 — Plan 06-02 Task 1: deployed 40-node workflow to n8n-azure (39→40 nodes, FB: Publish Photo node live). FACEBOOK_PAGE_ID=981931321668013 confirmed in Azure Container App. Pre-flight Page token check passed. Workflow Qql7mvYRxKBsPZ5t active=true. No code changes — deploy-only task.
+Phase: 6 of 9 (Facebook Single-Photo Publishing) — COMPLETE 2026-04-17 (Plans 01+02)
+Next: Phase 7 (Carousel Publishing IG + FB)
+Last activity: 2026-04-17 — Phase 6 complete. Plan 06-01: added FB Publish Photo node (40 nodes). Plan 06-02: deployed + 6 E2E test executions, 3 bugs fixed (WA newlines, Sheets operation, Sheets column order). Final exec 111: all 14/14 nodes pass. Live FB post, combined WA notification, Sheets row with IG_URL+FB_URL. Commits a436122→8aaea68.
 
-Progress: [█████░░░░░] ~42% (v1.1, 5/12 plans — Phase 4 complete, Phase 5 complete, Phase 6 Plan 01 complete) — [██████████] 100% (v1.0 complete)
+Progress: [██████░░░░] ~50% (v1.1, 6/12 plans — Phase 4-6 complete) — [██████████] 100% (v1.0 complete)
 
 ## Performance Metrics
 
@@ -36,6 +36,7 @@ Progress: [█████░░░░░] ~42% (v1.1, 5/12 plans — Phase 4 co
 |-------|-------|--------|
 | 4. Azure Blob Re-hosting | 2 | **Complete** — Plan 01 + Plan 02 (Task 1 + Task 2) all green; Tests A/B/C PASS 2026-04-16 |
 | 5. Instagram Single-Photo Publishing | 2 | **Complete** — Plans 01+02 done 2026-04-16; 2 live IG posts verified, 10 bugs fixed during deploy |
+| 6. Facebook Single-Photo Publishing | 2 | **Complete** — Plans 01+02 done 2026-04-17; 6 E2E tests, 3 bugs fixed (WA newlines, Sheets op, Sheets col order) |
 
 **Plan execution history (v1.1):**
 
@@ -45,6 +46,8 @@ Progress: [█████░░░░░] ~42% (v1.1, 5/12 plans — Phase 4 co
 | 04-02 | ~3 min (Task 1) + ~30 min (Task 2 agent run, incl. 3 bug fixes) | 2/2 complete | 2 modified | 23d195d (Task 1, wire sub-workflow into main), TBD (Task 2 fixes to `subworkflow-rehost-images.json`) |
 | 05-01 | ~15 min | 1/1 complete | 1 modified | 81d66e6 (Task 1, IG publish chain + guard + columns) |
 | 05-02 | ~4h (multi-session, 10 bug fixes) | 3/3 complete | 1 modified (11 commits) | c75c34f→827af90 (10 workflow fixes); 2 live IG posts exec 90+93 |
+| 06-01 | ~8 min | 1/1 complete | 1 modified | a436122 (FB node + rewire), 335dbb6 (summary) |
+| 06-02 | ~40 min (6 E2E tests, 3 bug fixes) | 2/2 complete | 1 modified | 0d48d27 (deploy), 5d089a7 (3 fixes), 8aaea68 (summary) |
 | 06-01 | ~8 min | 1/1 complete | 1 modified | a436122 (FB publish node + rewire + WA update + Sheets FB_URL) |
 
 ## Accumulated Context
@@ -86,7 +89,7 @@ Recent decisions relevant to v1.1:
 
 ### Pending Todos
 
-- Verify Google Sheets row logging empirically at the start of Phase 6 (config correct after 827af90 but no execution completed with that fix in place)
+- ~~Verify Google Sheets row logging empirically~~ — RESOLVED 2026-04-17: Sheets node needed `operation:"append"` + `resource:"sheet"` + correct column schema order. Fixed in commit 5d089a7, verified in exec 111
 - Address Supabase session status update (set to "consumed" after publish) — deferred to Phase 9
 
 ### Blockers/Concerns
@@ -103,5 +106,5 @@ Recent decisions relevant to v1.1:
 ## Session Continuity
 
 Last session: 2026-04-17
-Stopped at: Phase 6 Plan 02 Task 1 complete — workflow deployed to n8n-azure (40 nodes, active). At checkpoint:human-verify for Task 2 (E2E test). Resume from Task 2 after human verifies FB publish + WA notification + Sheets logging.
-Resume file: .planning/phases/06-facebook-single-photo-publishing/06-02-PLAN.md (Task 2)
+Stopped at: Phase 6 complete — FB single-photo publishing E2E verified (exec 111, 14/14 nodes). 3 bugs fixed during deploy (WA newlines, Sheets operation, Sheets column order). Sheets logging empirically confirmed (closing Phase 5 gap). Next: Phase 7 (Carousel Publishing IG + FB).
+Resume file: .planning/phases/06-facebook-single-photo-publishing/06-02-SUMMARY.md
