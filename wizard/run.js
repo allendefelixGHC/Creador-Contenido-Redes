@@ -206,6 +206,75 @@ async function suggestSlideCount(topic, postType) {
   }
 }
 
+// ─── Scheduling helpers ────────────────────────────────────
+
+function madridLocalToUTC(localDateStr, localTimeStr, tz = 'Europe/Madrid') {
+  // Probe-based offset detection: no external deps, handles CET/CEST automatically
+  const probeUTC = new Date(localDateStr + 'T' + localTimeStr + ':00Z');
+  const madridTimeAtProbe = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz,
+    hour: '2-digit', minute: '2-digit', hour12: false
+  }).format(probeUTC);
+
+  const [targetH] = localTimeStr.split(':').map(Number);
+  const [probeH]  = madridTimeAtProbe.split(':').map(Number);
+
+  let hourDiff = probeH - targetH;
+  if (hourDiff > 12) hourDiff -= 24;   // midnight wrap guard
+  if (hourDiff < -12) hourDiff += 24;
+
+  const result = new Date(probeUTC);
+  result.setUTCHours(result.getUTCHours() - hourDiff);
+  return result.toISOString();
+}
+
+function parsePublishTime(input) {
+  const normalized = input.trim().toLowerCase();
+
+  if (normalized === 'ahora' || normalized === 'now') {
+    return { publish_at: 'now' };
+  }
+
+  const tz = 'Europe/Madrid';
+  const now = new Date();
+
+  // Get today's date string in Madrid time (YYYY-MM-DD)
+  const madridToday = new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit'
+  }).format(now);
+
+  const hoyMatch    = normalized.match(/^hoy\s+(\d{1,2}):(\d{2})$/);
+  const mananaMatch = normalized.match(/^ma[nñ]ana\s+(\d{1,2}):(\d{2})$/);
+
+  let dateStr, timeStr;
+
+  if (hoyMatch) {
+    dateStr = madridToday;
+    timeStr = hoyMatch[1].padStart(2, '0') + ':' + hoyMatch[2];
+  } else if (mananaMatch) {
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    dateStr = new Intl.DateTimeFormat('en-CA', {
+      timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit'
+    }).format(tomorrow);
+    timeStr = mananaMatch[1].padStart(2, '0') + ':' + mananaMatch[2];
+  } else {
+    return { error: 'Formato inválido. Usar: ahora | hoy HH:MM | mañana HH:MM' };
+  }
+
+  const publish_at = madridLocalToUTC(dateStr, timeStr);
+  const diffMs = new Date(publish_at).getTime() - now.getTime();
+
+  if (diffMs <= 0) {
+    return { error: 'La hora está en el pasado.' };
+  }
+  if (diffMs > 24 * 60 * 60 * 1000) {
+    return { error: 'Máximo 24 horas. Usá hoy HH:MM o mañana HH:MM dentro del límite.' };
+  }
+
+  return { publish_at, wait_minutes: Math.round(diffMs / 60000) };
+}
+
 // ─── WIZARD PRINCIPAL ──────────────────────────────────────
 async function runWizard() {
   console.log("\n");
@@ -364,6 +433,50 @@ async function runWizard() {
     console.log(c("green", `\n  ✓ ${selectedModel.emoji} ${selectedModel.name || "Imagen propia"}\n`));
   }
 
+  // PASO 6: HORA DE PUBLICACION
+  div();
+  console.log(c("bright", "  PASO 6 — Hora de publicacion\n"));
+
+  let publishAt = 'now';
+  let publishAtDisplay = 'Ahora';
+
+  const schedChoice = await ask(
+    `  [1] Ahora\n` +
+    `  [2] Hoy HH:MM  (ej: hoy 18:00)\n` +
+    `  [3] Mañana HH:MM  (ej: mañana 09:30)\n` +
+    `  → `
+  );
+
+  if (schedChoice.trim() !== '1') {
+    let input = '';
+    if (schedChoice.trim() === '2') {
+      input = await ask('  → Hora (hoy HH:MM): ');
+    } else if (schedChoice.trim() === '3') {
+      input = await ask('  → Hora (mañana HH:MM): ');
+    }
+
+    let result = parsePublishTime(input.trim());
+    while (result.error) {
+      console.log(c('red', `\n  ✗ ${result.error}`));
+      input = await ask('  → Nueva hora (ahora | hoy HH:MM | mañana HH:MM): ');
+      if (input.trim().toLowerCase() === 'ahora') { result = { publish_at: 'now' }; break; }
+      result = parsePublishTime(input.trim());
+    }
+
+    publishAt = result.publish_at;
+    if (publishAt !== 'now') {
+      // Display in Madrid local time
+      const localDisplay = new Intl.DateTimeFormat('es-ES', {
+        timeZone: 'Europe/Madrid',
+        weekday: 'long', hour: '2-digit', minute: '2-digit', hour12: false
+      }).format(new Date(publishAt));
+      publishAtDisplay = localDisplay.charAt(0).toUpperCase() + localDisplay.slice(1);
+      console.log(c('green', `\n  ✓ Programado: ${publishAtDisplay} (Madrid)\n`));
+    } else {
+      console.log(c('green', `\n  ✓ Publicar ahora\n`));
+    }
+  }
+
   // RESUMEN
   div();
   console.log(c("bright", "  📋 RESUMEN FINAL"));
@@ -380,6 +493,7 @@ async function runWizard() {
     const selectedModel = IMAGE_MODELS[imageModel] || { name: "Imagen propia", emoji: "📎" };
     console.log(`  🖼️  Imagen:      ${selectedModel.emoji} ${selectedModel.name || "Imagen propia"}${selectedModel.cost ? c("gray"," · "+selectedModel.cost) : ""}`);
   }
+  console.log(`  ⏰ Publicar:    ${publishAtDisplay}`);
   console.log();
   div();
 
@@ -402,6 +516,7 @@ async function runWizard() {
     has_text_in_image: hasTextInImage,
     approval_number:   process.env.WHATSAPP_APPROVAL_NUMBER,
     timestamp:         new Date().toISOString(),
+    publish_at:        publishAt,
     ...(isCarousel && {
       format:        "carousel",
       num_images:    numImages,
