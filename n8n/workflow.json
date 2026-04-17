@@ -614,7 +614,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Normalize both single-post and carousel briefs into the sub-workflow's expected input shape.\n// Single post: $json has final_image_url (string).\n// Carousel: $json has image_urls (array of strings) and num_images.\n//\n// Output shape for Execute Workflow:\n//   { image_urls: [{ index, url }], post_id, approval_number }\n\nconst data = $input.first().json;\nconst format = data.format || 'single';\n\n// Phase 5 guard: single-post only. Phase 7 removes this when carousel publish lands.\nif (format === 'carousel') {\n  throw new Error('Carousel publishing not yet supported — Phase 7 pending. Received format: ' + format);\n}\n\nlet imageUrls = [];\nif (format === 'carousel' && Array.isArray(data.image_urls)) {\n  imageUrls = data.image_urls.map((url, i) => ({ index: i + 1, url }));\n} else if (data.final_image_url) {\n  imageUrls = [{ index: 1, url: data.final_image_url }];\n} else {\n  throw new Error('Prep Re-host Input: no image URL found on approved post (neither final_image_url nor image_urls)');\n}\n\n// post_id: derive from session/timestamp. Prefer an existing session_id if present (set by Recuperar sesion Supabase).\nconst postId = data.session_id || ('propulsar_' + Date.now());\n\nreturn [{\n  json: {\n    // Pass ALL upstream fields through so downstream nodes (Sheets Log, future Meta publish)\n    // still have access to topic, type, angle, instagram/facebook text, etc.\n    ...data,\n    // Plus the sub-workflow input fields:\n    image_urls: imageUrls,\n    post_id: postId,\n    approval_number: data.approval_number\n  }\n}];",
+        "jsCode": "// Normalize both single-post and carousel briefs into the sub-workflow's expected input shape.\n// Single post: $json has final_image_url (string).\n// Carousel: $json has image_urls (array of strings) and num_images.\n//\n// Output shape for Execute Workflow:\n//   { image_urls: [{ index, url }], post_id, approval_number }\n\nconst data = $input.first().json;\nconst format = data.format || 'single';\n\nlet imageUrls = [];\nif (format === 'carousel' && Array.isArray(data.image_urls)) {\n  imageUrls = data.image_urls.map((url, i) => ({ index: i + 1, url }));\n} else if (data.final_image_url) {\n  imageUrls = [{ index: 1, url: data.final_image_url }];\n} else {\n  throw new Error('Prep Re-host Input: no image URL found on approved post (neither final_image_url nor image_urls)');\n}\n\n// post_id: derive from session/timestamp. Prefer an existing session_id if present (set by Recuperar sesion Supabase).\nconst postId = data.session_id || ('propulsar_' + Date.now());\n\nreturn [{\n  json: {\n    // Pass ALL upstream fields through so downstream nodes (Sheets Log, future Meta publish)\n    // still have access to topic, type, angle, instagram/facebook text, etc.\n    ...data,\n    // Plus the sub-workflow input fields:\n    image_urls: imageUrls,\n    post_id: postId,\n    approval_number: data.approval_number\n  }\n}];",
         "mode": "runOnceForAllItems"
       },
       "id": "prep-rehost-input",
@@ -625,7 +625,7 @@
         3060,
         380
       ],
-      "notes": "Normalizes single-post (final_image_url) into the sub-workflow input shape. Carousel briefs are rejected with a runtime error (Phase 7 removes this guard). Passes all other fields through so downstream nodes retain topic/type/angle/text."
+      "notes": "Normalizes single-post (final_image_url) into the sub-workflow input shape. Phase 7: carousel guard removed — carousel path now handled upstream by 🔀 ¿Formato Carrusel?. Passes all other fields through so downstream nodes retain topic/type/angle/text."
     },
     {
       "parameters": {
@@ -963,8 +963,8 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.4,
       "position": [
-        5070,
-        380
+        5290,
+        480
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -1088,8 +1088,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3720,
-        380
+        3940,
+        480
       ],
       "retryOnFail": true,
       "maxTries": 3,
@@ -1107,8 +1107,8 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1,
       "position": [
-        3940,
-        380
+        4160,
+        480
       ],
       "notes": "Fixed 30s wait per IGPUB-03. Container typically reaches FINISHED in 2-5s for single photos, but 30s gives a safe margin. Phase 5 Success Criterion 5 requires this gap be visible in execution trace. Polling (HARD-03) deferred to v2."
     },
@@ -1135,8 +1135,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        4160,
-        380
+        4380,
+        480
       ],
       "retryOnFail": false,
       "maxTries": 1,
@@ -1168,8 +1168,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        4380,
-        380
+        4600,
+        480
       ],
       "retryOnFail": true,
       "maxTries": 3,
@@ -1204,8 +1204,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        4850,
-        380
+        5070,
+        480
       ],
       "retryOnFail": true,
       "maxTries": 2,
@@ -1240,10 +1240,173 @@
       "waitBetweenTries": 0,
       "onError": "stopWorkflow",
       "position": [
-        4600,
-        380
+        4820,
+        480
       ],
       "notes": "CRITICAL: Retry DISABLED (FBPUB-01, ERR-02 equivalent). POST /{PAGE_ID}/photos is NOT idempotent — retry after timeout where Meta already processed creates a duplicate live FB post. Input: blob_urls[0].url from Merge Rehost Output. Output: { id: <photo_id>, post_id: '<page_id>_<photo_id>' }. Post_id used to construct FB_URL as 'https://www.facebook.com/' + post_id."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.format }}",
+              "value2": "carousel"
+            }
+          ]
+        }
+      },
+      "id": "format-carousel-branch",
+      "name": "🔀 ¿Formato Carrusel?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        3720,
+        380
+      ],
+      "notes": "Phase 7: Routes carousel briefs (format=carousel) to the carousel publish chain (TRUE output 0 — connected by Plan 02). Single-post briefs (format!=carousel) continue to the existing IG publish chain (FALSE output 1). Uses IF typeVersion 1 — v2/Switch v3 broken in n8n 2.14.2."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/content_sessions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_ANON_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.SUPABASE_ANON_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ session_id: 'propulsar_' + Date.now(), approval_number: $json.approval_number, topic: $json.topic, type: $json.type, angle: $json.angle || null, platforms: $json.platforms || [], image_model: $json.image_model || 'ideogram', format: 'carousel', image_urls: $json.image_urls, instagram_caption: $json.instagram_caption || ($json.instagram && $json.instagram.caption) || null, facebook_caption: $json.facebook_caption || ($json.facebook && $json.facebook.caption) || null, status: 'pending' }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "save-session-carousel",
+      "name": "💾 Guardar sesión Supabase (Carousel)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000,
+      "position": [
+        1968,
+        700
+      ],
+      "notes": "Inserts a carousel session into content_sessions BEFORE the WA preview is sent. Mirrors 💾 Guardar sesión Supabase (single-post). Uses format='carousel' and image_urls (JSONB array). retryOnFail=true — Supabase INSERT is idempotent by session_id (timestamp-based), safe to retry. Response = array of the inserted row."
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "rc-a1",
+              "name": "topic",
+              "type": "string",
+              "value": "={{ $('🗂️ Collect Image URLs').first().json.topic }}"
+            },
+            {
+              "id": "rc-a2",
+              "name": "type",
+              "type": "string",
+              "value": "={{ $('🗂️ Collect Image URLs').first().json.type }}"
+            },
+            {
+              "id": "rc-a3",
+              "name": "angle",
+              "type": "string",
+              "value": "={{ $('🗂️ Collect Image URLs').first().json.angle }}"
+            },
+            {
+              "id": "rc-a4",
+              "name": "platforms",
+              "type": "array",
+              "value": "={{ $('🗂️ Collect Image URLs').first().json.platforms }}"
+            },
+            {
+              "id": "rc-a5",
+              "name": "image_model",
+              "type": "string",
+              "value": "={{ $('🗂️ Collect Image URLs').first().json.image_model }}"
+            },
+            {
+              "id": "rc-a6",
+              "name": "format",
+              "type": "string",
+              "value": "={{ $('🗂️ Collect Image URLs').first().json.format }}"
+            },
+            {
+              "id": "rc-a7",
+              "name": "num_images",
+              "type": "number",
+              "value": "={{ $('🗂️ Collect Image URLs').first().json.num_images }}"
+            },
+            {
+              "id": "rc-a8",
+              "name": "image_urls",
+              "type": "array",
+              "value": "={{ $('🗂️ Collect Image URLs').first().json.image_urls }}"
+            },
+            {
+              "id": "rc-a9",
+              "name": "instagram_caption",
+              "type": "string",
+              "value": "={{ $('🗂️ Collect Image URLs').first().json.instagram_caption || ($('🗂️ Collect Image URLs').first().json.instagram && $('🗂️ Collect Image URLs').first().json.instagram.caption) || '' }}"
+            },
+            {
+              "id": "rc-a10",
+              "name": "facebook_caption",
+              "type": "string",
+              "value": "={{ $('🗂️ Collect Image URLs').first().json.facebook_caption || ($('🗂️ Collect Image URLs').first().json.facebook && $('🗂️ Collect Image URLs').first().json.facebook.caption) || '' }}"
+            },
+            {
+              "id": "rc-a11",
+              "name": "approval_number",
+              "type": "string",
+              "value": "={{ $('🗂️ Collect Image URLs').first().json.approval_number }}"
+            },
+            {
+              "id": "rc-a12",
+              "name": "session_id",
+              "type": "string",
+              "value": "={{ $('💾 Guardar sesión Supabase (Carousel)').first().json.session_id }}"
+            }
+          ]
+        },
+        "includeOtherFields": false,
+        "options": {}
+      },
+      "id": "reattach-carousel-data",
+      "name": "🔗 Re-attach carousel data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2192,
+        700
+      ],
+      "notes": "Supabase HTTP Request replaced the item with the inserted row. Re-attaches the pre-insert carousel data via cross-ref to Collect Image URLs, plus session_id from the Supabase insert response. Mirrors 🔗 Re-attach session data on the single-post path. Downstream WA nodes (Split URLs WA, Preparar mensaje WA) need the original carousel data shape."
     }
   ],
   "connections": {
@@ -1326,6 +1489,28 @@
       ]
     },
     "🗂️ Collect Image URLs": {
+      "main": [
+        [
+          {
+            "node": "💾 Guardar sesión Supabase (Carousel)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "💾 Guardar sesión Supabase (Carousel)": {
+      "main": [
+        [
+          {
+            "node": "🔗 Re-attach carousel data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔗 Re-attach carousel data": {
       "main": [
         [
           {
@@ -1602,6 +1787,18 @@
     },
     "🔗 Merge Rehost Output": {
       "main": [
+        [
+          {
+            "node": "🔀 ¿Formato Carrusel?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔀 ¿Formato Carrusel?": {
+      "main": [
+        [],
         [
           {
             "node": "📤 IG: Create Container",
